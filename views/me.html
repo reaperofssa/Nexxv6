@@ -1,0 +1,37 @@
+<body>
+    <div class="profile-info">
+        <img id="profilePicture" src="" alt="Profile Picture" width="100" height="100">
+        <h1 id="username"></h1>
+        <p id="followers"></p>
+        <p id="following"></p>
+    </div>
+    <div id="myPosts"></div>
+    <script>
+        async function loadProfile() {
+            const username = localStorage.getItem('username');
+            const res = await fetch(`/api/user/${username}`);
+            const data = await res.json();
+
+            if (res.ok) {
+                document.getElementById('username').textContent = `@${data.user.username}`;
+                document.getElementById('followers').textContent = `${data.user.followers} Followers`;
+                document.getElementById('following').textContent = `Following: ${data.user.following?.length || 0}`;
+                if (data.user.profilePicture) {
+                    document.getElementById('profilePicture').src = data.user.profilePicture;
+                }
+
+                const myPosts = document.getElementById('myPosts');
+                myPosts.innerHTML = data.posts.map(post => `
+                    <div class="post">
+                        <p>${post.caption}</p>
+                        ${post.file ? `<img src="${post.file}" alt="Post Image">` : ''}
+                    </div>
+                `).join('');
+            } else {
+                alert('Error loading profile.');
+            }
+        }
+
+        loadProfile();
+    </script>
+</body>
