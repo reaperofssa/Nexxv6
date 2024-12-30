@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / Sign Up</title>
+    <link rel="stylesheet" href="style.css"> <!-- Link to external CSS -->
+</head>
+<body>
+    <form id="authForm" enctype="multipart/form-data">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="file" name="profilePicture">
+        <button type="submit">Login / Sign Up</button>
+    </form>
+    <script>
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const res = await fetch('/api/auth', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.success) {
+                const profilePicture = formData.get('profilePicture');
+                if (profilePicture.size > 0) {
+                    const pictureForm = new FormData();
+                    pictureForm.append('file', profilePicture);
+                    pictureForm.append('username', data.user.username);
+                    await fetch('/api/profile-picture', { method: 'POST', body: pictureForm });
+                }
+                localStorage.setItem('username', data.user.username);
+                window.location.href = '/home';
+            } else {
+                alert(data.message);
+            }
+        });
+    </script>
+</body>
+</html>
