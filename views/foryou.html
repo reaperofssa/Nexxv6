@@ -1,53 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>For You</title>
+  <link rel="stylesheet" href="/css/foryou.css">
+</head>
 <body>
-    <div id="posts"></div>
-    <script>
-        let page = 0;
-        const limit = 5;
+  <div id="posts-container"></div>
 
-        async function loadPosts() {
-            const res = await fetch('/api/posts');
-            const posts = await res.json();
+  <footer>
+    <nav class="footer-nav">
+      <button onclick="navigateTo('/home')">Home</button>
+      <button onclick="navigateTo('/post')">Post</button>
+      <button onclick="navigateTo('/me')">Me</button>
+    </nav>
+  </footer>
 
-            const paginatedPosts = posts.slice(page * limit, (page + 1) * limit);
-            if (paginatedPosts.length === 0) return;
+  <script>
+    let currentIndex = 0; // Current post index
+    let posts = [];
+    let isTransitioning = false; // To prevent rapid swipes
 
-            const postsContainer = document.getElementById('posts');
-            paginatedPosts.forEach(post => {
-                const postHTML = `
-                    <div class="post">
-                        <h3>${post.username}</h3>
-                        <p>${post.caption}</p>
-                        ${post.file ? `<img src="${post.file}" alt="Post Image">` : ''}
-                        <button onclick="followUser('${post.username}')">Follow</button>
-                    </div>
-                `;
-                postsContainer.innerHTML += postHTML;
-            });
+    async function fetchPosts() {
+      const res = await fetch('/api/posts');
+      posts = await res.json();
+      renderPost(currentIndex); // Render the first post
+    }
 
-            page++;
-        }
+    function renderPost(index) {
+      if (index < 0 || index >= posts.length) return;
 
-        function followUser(target) {
-            const username = localStorage.getItem('username');
-            fetch('/api/follow', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, target }),
-            }).then(res => res.json()).then(data => {
-                if (data.success) {
-                    alert(`You are now following ${target}!`);
-                } else {
-                    alert(data.message);
-                }
-            });
-        }
+      const postsContainer = document.getElementById('posts-container');
+      postsContainer.innerHTML = ''; // Clear container
 
-        window.addEventListener('scroll', () => {
-            if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
-                loadPosts();
-            }
-        });
+      const post = posts[index];
+      const postElement = document.createElement('div');
+      postElement.className = 'post';
 
-        loadPosts();
-    </script>
+      postElement.innerHTML = `
+        <div class="media-container">
+          ${post.file ? `<img src="${post.file}" alt="Post Media" class="media">` : ''}
+        </div>
+        <div class="overlay">
+          <h3 class="username">${post.username}</h3>
+          <p class="caption">${post.caption}</p>
+          <button class="like-button" onclick="likePost(${index})">
+            ${post.liked ? '❤️ Liked' : '🤍 Like'}
+          </button>
+        </div>
+      `;
+
+      postsContainer.appendChild(postElement);
+    }
+
+    async function likePost(index) {
+      const post = posts[index];
+      post.liked = !post.liked; // Toggle like status
+
+      // Update like status on the server
+      await fetch('/api/like', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: post.id, liked: post.liked }),
+      });
+
+      renderPost(index); // Re-render the current post
+    }
+
+    function navigatePost(direction) {
+      if (isTransitioning) return; // Prevent rapid swipes
+      isTransitioning = true;
+
+      const newIndex = currentIndex + direction;
+      if (newIndex >= 0 && newIndex < posts.length) {
+        currentIndex = newIndex;
+        renderPost(currentIndex);
+      }
+
+      setTimeout(() => {
+        isTransitioning = false;
+      }, 300); // Add a short delay to avoid rapid transitions
+    }
+
+    // Swipe Gesture Detection
+    let startY = 0;
+    window.addEventListener('touchstart', (e) => {
+      startY = e.touches[0].clientY;
+    });
+
+    window.addEventListener('touchend', (e) => {
+      const endY = e.changedTouches[0].clientY;
+      const distance = startY - endY;
+
+      if (distance > 50) navigatePost(1); // Swipe up
+      else if (distance < -50) navigatePost(-1); // Swipe down
+    });
+
+    function navigateTo(route) {
+      window.location.href = route;
+    }
+
+    fetchPosts(); // Load posts on page load
+  </script>
 </body>
+</html>

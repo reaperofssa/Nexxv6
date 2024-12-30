@@ -1,1 +1,39 @@
-[]
+[
+  {
+    "id": 4,
+    "username": "undefined",
+    "caption": "Yoo",
+    "file": "/uploads/ee580bedd7dd921e43f0422001b9ec12",
+    "timestamp": 1735563529348,
+    "liked": false
+  },
+  {
+    "id": 3,
+    "username": "undefined",
+    "caption": "Bro whatchu want",
+    "file": "/uploads/9c441515cadf42f65d380cb7c48ff937",
+    "timestamp": 1735562861364,
+    "liked": true
+  },
+  {
+    "username": "undefined",
+    "caption": "I’m new here",
+    "file": "/uploads/adb682f8c4e09d99bdd70ab40961f321",
+    "timestamp": 1735561394243,
+    "liked": true
+  },
+  {
+    "username": "undefined",
+    "caption": "Yoo",
+    "file": "/uploads/86a2f1ae469f751a3308586fd4aa1d9e",
+    "timestamp": 1735561290045
+  },
+  {
+    "id": 5,
+    "username": "undefined",
+    "caption": "Bro",
+    "file": "/uploads/5ec3d44dc397ba75b17642ee30a6e8e2",
+    "timestamp": 1735563644765,
+    "liked": false
+  }
+]

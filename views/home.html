@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home</title>
+  <link rel="stylesheet" href="/css/home.css">
+</head>
+<body>
+  <header>
+    <h1>Welcome to the Social App</h1>
+  </header>
+
+  <main>
+    <section id="content">
+      <h2>Explore the App</h2>
+      <p>Use the navigation buttons below to explore the app.</p>
+    </section>
+  </main>
+
+  <footer>
+    <nav class="footer-nav">
+      <button id="forYouButton" onclick="navigateTo('/foryou')">For You</button>
+      <button id="postButton" onclick="navigateTo('/post')">Post</button>
+      <button id="meButton" onclick="navigateTo('/me')">Me</button>
+    </nav>
+  </footer>
+
+  <script>
+    function navigateTo(route) {
+      window.location.href = route;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create a Post</title>
+  <link rel="stylesheet" href="/css/post.css">
+</head>
+<body>
+  <header>
+    <h1>Create a New Post</h1>
+  </header>
+
+  <main>
+    <form id="postForm">
+      <div>
+        <label for="caption">Caption:</label>
+        <textarea id="caption" name="caption" placeholder="Enter your caption here..." required></textarea>
+      </div>
+      <div>
+        <label for="file">Upload Image/Video:</label>
+        <input type="file" id="file" name="file" accept="image/*,video/*" required>
+      </div>
+      <button type="submit">Post</button>
+    </form>
+    <p id="message" style="color: green; display: none;"></p>
+  </main>
+
+  <footer>
+    <nav class="footer-nav">
+      <button onclick="navigateTo('/foryou')">For You</button>
+      <button onclick="navigateTo('/home')">Home</button>
+      <button onclick="navigateTo('/me')">Me</button>
+    </nav>
+  </footer>
+
+  <script>
+    // Function to navigate between pages
+    function navigateTo(route) {
+      window.location.href = route;
+    }
+
+    // Handle form submission
+    const postForm = document.getElementById('postForm');
+    const message = document.getElementById('message');
+
+    postForm.addEventListener('submit', async (event) => {
+      event.preventDefault(); // Prevent page reload
+
+      // Get form data
+      const formData = new FormData(postForm);
+      const username = localStorage.getItem('username'); // Retrieve username from localStorage
+      if (!username) {
+        alert('You must be logged in to create a post.');
+        navigateTo('/login');
+        return;
+      }
+
+      formData.append('username', username); // Add username to form data
+
+      try {
+        // Send POST request to the server
+        const response = await fetch('/api/post', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          message.textContent = 'Post created successfully!';
+          message.style.display = 'block';
+          postForm.reset(); // Reset the form
+        } else {
+          alert('Failed to create post. Try again.');
+        }
+      } catch (error) {
+        console.error('Error creating post:', error);
+        alert('An error occurred. Please try again.');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -8,7 +8,9 @@ const app = express();
 const PORT = 3000;
 
 // Middleware
-app.use(express.static('public'));
+// Serve static files from "public"
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('views'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -82,10 +84,12 @@ app.post('/api/post', upload.single('file'), (req, res) => {
     const file = req.file ? `/uploads/${req.file.filename}` : '';
 
     const newPost = {
+        id: posts.length + 1,
         username,
         caption,
         file,
         timestamp: Date.now(),
+        liked: false, // Default to not liked
     };
 
     posts.push(newPost);
@@ -144,6 +148,22 @@ app.post('/api/follow', (req, res) => {
         res.json({ success: true, following: user.following });
     } else {
         res.status(400).json({ success: false, message: 'Invalid follow request' });
+    }
+});
+
+// API to like/unlike a post
+app.post('/api/like', (req, res) => {
+    const { postId, liked } = req.body;
+
+    const post = posts.find(p => p.id === postId);
+
+    if (post) {
+        post.liked = liked; // Update the like status
+
+        fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
+        res.json({ success: true, liked: post.liked });
+    } else {
+        res.status(404).json({ success: false, message: 'Post not found' });
     }
 });
 
