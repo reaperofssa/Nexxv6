@@ -8,7 +8,6 @@ const app = express();
 const PORT = 3000;
 
 // Middleware
-// Serve static files from "public"
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static('views'));
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -31,17 +30,17 @@ let posts = loadFile(POSTS_FILE);
 
 // Routes
 app.get('/', (req, res) => {
-    res.redirect('/login');
+    const username = req.query.username || '';
+    if (username && users.find((user) => user.username === username)) {
+        res.redirect('/foryou');
+    } else {
+        res.redirect('/login');
+    }
 });
 
 // Login Page
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/login.html'));
-});
-
-// Home Page
-app.get('/home', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/home.html'));
 });
 
 // For You Page
@@ -63,7 +62,7 @@ app.get('/me', (req, res) => {
 app.post('/api/auth', (req, res) => {
     const { username, password } = req.body;
 
-    let user = users.find(u => u.username === username);
+    let user = users.find((u) => u.username === username);
     if (user) {
         if (user.password === password) {
             return res.json({ success: true, user });
@@ -78,7 +77,7 @@ app.post('/api/auth', (req, res) => {
     }
 });
 
-// API to post
+// API to create a post
 app.post('/api/post', upload.single('file'), (req, res) => {
     const { username, caption } = req.body;
     const file = req.file ? `/uploads/${req.file.filename}` : '';
@@ -89,7 +88,9 @@ app.post('/api/post', upload.single('file'), (req, res) => {
         caption,
         file,
         timestamp: Date.now(),
-        liked: false, // Default to not liked
+        liked: false,
+        likes: 0,
+        shares: 0,
     };
 
     posts.push(newPost);
@@ -102,11 +103,44 @@ app.get('/api/posts', (req, res) => {
     res.json(posts.sort((a, b) => b.timestamp - a.timestamp));
 });
 
+// API to like/unlike a post
+app.post('/api/like', (req, res) => {
+    const { postId, liked } = req.body;
+
+    const post = posts.find((p) => p.id === postId);
+
+    if (post) {
+        post.liked = liked;
+        post.likes = liked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1);
+
+        fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
+        res.json({ success: true, liked: post.liked, likes: post.likes });
+    } else {
+        res.status(404).json({ success: false, message: 'Post not found' });
+    }
+});
+
+// API to share a post
+app.post('/api/share', (req, res) => {
+    const { postId } = req.body;
+
+    const post = posts.find((p) => p.id === postId);
+
+    if (post) {
+        post.shares = (post.shares || 0) + 1;
+
+        fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
+        res.json({ success: true, shares: post.shares });
+    } else {
+        res.status(404).json({ success: false, message: 'Post not found' });
+    }
+});
+
 // API to fetch user info
 app.get('/api/user/:username', (req, res) => {
     const username = req.params.username;
-    const user = users.find(u => u.username === username);
-    const userPosts = posts.filter(p => p.username === username);
+    const user = users.find((u) => u.username === username);
+    const userPosts = posts.filter((p) => p.username === username);
     if (user) {
         res.json({ user, posts: userPosts });
     } else {
@@ -117,7 +151,7 @@ app.get('/api/user/:username', (req, res) => {
 // API to upload/update profile picture
 app.post('/api/profile-picture', upload.single('file'), (req, res) => {
     const username = req.body.username;
-    const user = users.find(u => u.username === username);
+    const user = users.find((u) => u.username === username);
 
     if (user) {
         user.profilePicture = `/uploads/${req.file.filename}`;
@@ -125,45 +159,6 @@ app.post('/api/profile-picture', upload.single('file'), (req, res) => {
         res.json({ success: true, profilePicture: user.profilePicture });
     } else {
         res.status(404).json({ success: false, message: 'User not found' });
-    }
-});
-
-// API to follow/unfollow a user
-app.post('/api/follow', (req, res) => {
-    const { username, target } = req.body;
-
-    const user = users.find(u => u.username === username);
-    const targetUser = users.find(u => u.username === target);
-
-    if (user && targetUser && username !== target) {
-        if (!user.following) user.following = [];
-        if (user.following.includes(target)) {
-            user.following = user.following.filter(f => f !== target);
-            targetUser.followers -= 1;
-        } else {
-            user.following.push(target);
-            targetUser.followers += 1;
-        }
-        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-        res.json({ success: true, following: user.following });
-    } else {
-        res.status(400).json({ success: false, message: 'Invalid follow request' });
-    }
-});
-
-// API to like/unlike a post
-app.post('/api/like', (req, res) => {
-    const { postId, liked } = req.body;
-
-    const post = posts.find(p => p.id === postId);
-
-    if (post) {
-        post.liked = liked; // Update the like status
-
-        fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
-        res.json({ success: true, liked: post.liked });
-    } else {
-        res.status(404).json({ success: false, message: 'Post not found' });
     }
 });
 

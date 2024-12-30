@@ -11,7 +11,7 @@
 
   <footer>
     <nav class="footer-nav">
-      <button onclick="navigateTo('/home')">Home</button>
+      <button onclick="navigateTo('/foryou')">Home</button>
       <button onclick="navigateTo('/post')">Post</button>
       <button onclick="navigateTo('/me')">Me</button>
     </nav>
@@ -23,9 +23,13 @@
     let isTransitioning = false; // To prevent rapid swipes
 
     async function fetchPosts() {
-      const res = await fetch('/api/posts');
-      posts = await res.json();
-      renderPost(currentIndex); // Render the first post
+      try {
+        const res = await fetch('/api/posts');
+        posts = await res.json();
+        renderPost(currentIndex); // Render the first post
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      }
     }
 
     function renderPost(index) {
@@ -48,6 +52,7 @@
           <button class="like-button" onclick="likePost(${index})">
             ${post.liked ? '❤️ Liked' : '🤍 Like'}
           </button>
+          <span class="like-count">${post.likes || 0} likes</span>
         </div>
       `;
 
@@ -57,15 +62,20 @@
     async function likePost(index) {
       const post = posts[index];
       post.liked = !post.liked; // Toggle like status
+      post.likes = post.liked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1); // Update local like count
 
-      // Update like status on the server
-      await fetch('/api/like', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: post.id, liked: post.liked }),
-      });
+      try {
+        // Update like status on the server
+        await fetch('/api/like', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postId: post.id, liked: post.liked }),
+        });
 
-      renderPost(index); // Re-render the current post
+        renderPost(index); // Re-render the current post
+      } catch (error) {
+        console.error('Error updating like:', error);
+      }
     }
 
     function navigatePost(direction) {

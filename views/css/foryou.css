@@ -49,30 +49,65 @@ body {
 
 .overlay {
   position: absolute;
-  bottom: 15%;
+  bottom: 20%; /* Adjusted to move content upwards */
   left: 5%;
   right: 5%;
   z-index: 10;
   color: white;
   text-shadow: 0px 0px 10px black;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Align content to the left */
 }
 
 .username {
-  font-size: 1.8rem; /* Large username */
+  font-size: 1.5rem; /* Reduced size */
   font-weight: bold;
-  margin: 0;
+  margin: 0 0 5px; /* Added bottom margin */
 }
 
 .caption {
-  font-size: 1.2rem; /* Readable caption */
-  margin: 8px 0 0;
+  font-size: 1rem; /* Reduced size */
+  margin: 0 0 10px; /* Added bottom margin */
+}
+
+.like-container {
+  position: fixed;
+  bottom: 4rem; /* Placed above the footer */
+  right: 1rem; /* Right-aligned */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  z-index: 20;
+}
+
+.like-button {
+  background-color: transparent;
+  border: 1px solid white;
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.like-button:hover {
+  background-color: white;
+  color: black;
+}
+
+.like-count {
+  font-size: 0.9rem;
+  text-align: right;
 }
 
 footer {
   background-color: #121212;
   display: flex;
-  justify-content: space-around;
-  padding: 1rem 0;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 0.5rem 0; /* Reduced padding for height */
   border-top: 1px solid #444;
   position: fixed;
   bottom: 0;
@@ -83,8 +118,8 @@ footer button {
   background-color: transparent;
   border: 1px solid white;
   color: white;
-  padding: 0.8rem 1.5rem;
-  font-size: 1rem;
+  padding: 0.6rem 1rem; /* Reduced padding */
+  font-size: 0.9rem;
   border-radius: 5px;
   cursor: pointer;
 }

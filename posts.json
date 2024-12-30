@@ -1,32 +1,50 @@
 [
   {
-    "id": 4,
+    "id": 10,
+    "username": "Reiker2fast",
+    "caption": "D",
+    "file": "/uploads/18f572dda5f231f9cacad0c1d56f7067",
+    "timestamp": 1735577595232,
+    "liked": true,
+    "likes": 1,
+    "shares": 0
+  },
+  {
+    "id": 9,
+    "username": "Reiker2fast",
+    "caption": "G",
+    "file": "/uploads/cd9269c0df1b9c818bf829c92012fc0b",
+    "timestamp": 1735577340442,
+    "liked": true,
+    "likes": 1,
+    "shares": 0
+  },
+  {
+    "id": 8,
+    "username": "Reiker2fast",
+    "caption": "Bro",
+    "file": "/uploads/8b9bc74b42dd96e8cd760155f3ba0d03",
+    "timestamp": 1735577319887,
+    "liked": true,
+    "likes": 1,
+    "shares": 0
+  },
+  {
+    "id": 7,
     "username": "undefined",
-    "caption": "Yoo",
-    "file": "/uploads/ee580bedd7dd921e43f0422001b9ec12",
-    "timestamp": 1735563529348,
+    "caption": "S",
+    "file": "/uploads/c51f800dee4a399c0101118158928ea5",
+    "timestamp": 1735576850478,
+    "liked": true,
+    "likes": 1
+  },
+  {
+    "id": 6,
+    "username": "undefined",
+    "caption": "S",
+    "file": "/uploads/1413eb24ded6c29e289330050e285336",
+    "timestamp": 1735576845627,
     "liked": false
-  },
-  {
-    "id": 3,
-    "username": "undefined",
-    "caption": "Bro whatchu want",
-    "file": "/uploads/9c441515cadf42f65d380cb7c48ff937",
-    "timestamp": 1735562861364,
-    "liked": true
-  },
-  {
-    "username": "undefined",
-    "caption": "I’m new here",
-    "file": "/uploads/adb682f8c4e09d99bdd70ab40961f321",
-    "timestamp": 1735561394243,
-    "liked": true
-  },
-  {
-    "username": "undefined",
-    "caption": "Yoo",
-    "file": "/uploads/86a2f1ae469f751a3308586fd4aa1d9e",
-    "timestamp": 1735561290045
   },
   {
     "id": 5,
@@ -34,6 +52,39 @@
     "caption": "Bro",
     "file": "/uploads/5ec3d44dc397ba75b17642ee30a6e8e2",
     "timestamp": 1735563644765,
-    "liked": false
+    "liked": true,
+    "likes": 1
+  },
+  {
+    "id": 4,
+    "username": "undefined",
+    "caption": "Yoo",
+    "file": "/uploads/ee580bedd7dd921e43f0422001b9ec12",
+    "timestamp": 1735563529348,
+    "liked": true,
+    "likes": 1
+  },
+  {
+    "id": 3,
+    "username": "undefined",
+    "caption": "Bro whatchu want",
+    "file": "/uploads/9c441515cadf42f65d380cb7c48ff937",
+    "timestamp": 1735562861364,
+    "liked": false,
+    "likes": 0
+  },
+  {
+    "username": "undefined",
+    "caption": "I’m new here",
+    "file": "/uploads/adb682f8c4e09d99bdd70ab40961f321",
+    "timestamp": 1735561394243,
+    "liked": true,
+    "likes": 3
+  },
+  {
+    "username": "undefined",
+    "caption": "Yoo",
+    "file": "/uploads/86a2f1ae469f751a3308586fd4aa1d9e",
+    "timestamp": 1735561290045
   }
 ]

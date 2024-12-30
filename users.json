@@ -1,7 +1,16 @@
 [
   {
+    "username": "Reiker",
+    "password": "Solos",
     "followers": 0,
     "following": [],
-    "profilePicture": ""
+    "profilePicture": "/uploads/3559f816176255e5a99657ba43701822"
+  },
+  {
+    "username": "Reiker2fast",
+    "password": "reiker",
+    "followers": 5000,
+    "following": [],
+    "profilePicture": "/uploads/4615027cff942cbcfc75e8214f3a6345"
   }
 ]
