@@ -1,0 +1,53 @@
+<body>
+    <div id="posts"></div>
+    <script>
+        let page = 0;
+        const limit = 5;
+
+        async function loadPosts() {
+            const res = await fetch('/api/posts');
+            const posts = await res.json();
+
+            const paginatedPosts = posts.slice(page * limit, (page + 1) * limit);
+            if (paginatedPosts.length === 0) return;
+
+            const postsContainer = document.getElementById('posts');
+            paginatedPosts.forEach(post => {
+                const postHTML = `
+                    <div class="post">
+                        <h3>${post.username}</h3>
+                        <p>${post.caption}</p>
+                        ${post.file ? `<img src="${post.file}" alt="Post Image">` : ''}
+                        <button onclick="followUser('${post.username}')">Follow</button>
+                    </div>
+                `;
+                postsContainer.innerHTML += postHTML;
+            });
+
+            page++;
+        }
+
+        function followUser(target) {
+            const username = localStorage.getItem('username');
+            fetch('/api/follow', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, target }),
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    alert(`You are now following ${target}!`);
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+        window.addEventListener('scroll', () => {
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+                loadPosts();
+            }
+        });
+
+        loadPosts();
+    </script>
+</body>
