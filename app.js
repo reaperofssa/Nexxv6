@@ -57,6 +57,14 @@ app.get('/foryou', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/foryou.html'));
 });
 
+app.get('/post', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/post.html'));
+});
+
+app.get('/me', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/me.html'));
+});
+
 // User Authentication
 app.post('/api/auth', (req, res) => {
     const { username, password } = req.body;
@@ -146,6 +154,22 @@ app.post('/api/follow', (req, res) => {
         res.json({ success: true, followerCount: followeeUser.followers });
     } else {
         res.status(404).json({ success: false, message: 'User not found.' });
+    }
+});
+
+// Share a post
+app.post('/api/share', (req, res) => {
+    const { postId } = req.body;
+
+    const post = posts.find((p) => p.id === postId);
+
+    if (post) {
+        post.shares = (post.shares || 0) + 1;
+
+        fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
+        res.json({ success: true, shares: post.shares });
+    } else {
+        res.status(404).json({ success: false, message: 'Post not found.' });
     }
 });
 
