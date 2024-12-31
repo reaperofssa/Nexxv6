@@ -126,8 +126,8 @@ function renderPost(index) {
           <button class="like-button" onclick="likePost(${index})">
             ${post.liked ? '❤️ Liked' : '🤍 Like'}
           </button>
-          <button class="follow-button" onclick="followUser('${post.username}')">
-            ${post.following ? 'Following' : 'Follow'}
+          <button class="follow-button" onclick="followUser('${post.username}', ${index})">
+                ${post.following ? 'Following' : 'Follow'}
           </button>
           <span class="like-count">${post.likes || 0} likes</span>
           <button class="share-button" onclick="sharePost('${post.id}')">🔗 Share</button>
