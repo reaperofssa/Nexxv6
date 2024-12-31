@@ -192,6 +192,7 @@ app.post('/api/share', (req, res) => {
 app.post('/api/follow', (req, res) => {
     const { follower, followee } = req.body;
 
+    // Find the follower and followee users
     const followerUser = users.find((u) => u.username === follower);
     const followeeUser = users.find((u) => u.username === followee);
 
@@ -199,15 +200,22 @@ app.post('/api/follow', (req, res) => {
         if (followerUser.following.includes(followee)) {
             // Unfollow
             followerUser.following = followerUser.following.filter((f) => f !== followee);
+            followeeUser.followersList = followeeUser.followersList.filter((f) => f !== follower);
             followeeUser.followers = Math.max(0, followeeUser.followers - 1);
         } else {
             // Follow
             followerUser.following.push(followee);
+            followeeUser.followersList.push(follower);
             followeeUser.followers += 1;
         }
 
+        // Save updated users data to the file
         fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-        res.json({ success: true, followerCount: followeeUser.followers });
+        res.json({ 
+            success: true, 
+            followerCount: followeeUser.followers, 
+            followersList: followeeUser.followersList 
+        });
     } else {
         res.status(404).json({ success: false, message: 'User not found.' });
     }
