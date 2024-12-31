@@ -106,11 +106,17 @@
 
     async function likePost(index) {
       const post = posts[index];
+      const username = post.username; // The username associated with the post
+      const pathUsername = window.location.pathname.includes('/me') ? 'me' : 'user';
+      const apiUrl = pathUsername === 'me'
+        ? `/api/me?username=${username}`
+        : `/api/user/${username}`;
+
       post.liked = !post.liked;
       post.likes = post.liked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1);
 
       try {
-        await fetch('/api/like', {
+        await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ postId: post.id, liked: post.liked }),
@@ -122,8 +128,13 @@
     }
 
     async function followUser(username) {
+      const pathUsername = window.location.pathname.includes('/me') ? 'me' : 'user';
+      const apiUrl = pathUsername === 'me'
+        ? `/api/me?username=${username}`
+        : `/api/user/${username}`;
+
       try {
-        const res = await fetch('/api/follow', {
+        const res = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username }),
