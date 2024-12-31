@@ -48,12 +48,28 @@ let isTransitioning = false;
 let verifiedUsers = [];
 let currentUser = null; // To store the logged-in user's details
 
+// Function to fetch the current user (fetches from /api/me)
 async function fetchCurrentUser() {
+    const username = localStorage.getItem('username');
+    
+    if (!username) {
+        console.error('No user logged in');
+        return;
+    }
+
     try {
-        const res = await fetch('/api/me');
+        const res = await fetch('/api/me', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-username': username  // Send the username in the headers
+            }
+        });
+
         const data = await res.json();
+
         if (data.success) {
-            currentUser = data.user;
+            currentUser = data.user; // Store current user details
         } else {
             console.error('Failed to fetch current user:', data.message);
         }
@@ -62,6 +78,7 @@ async function fetchCurrentUser() {
     }
 }
 
+// Function to fetch all posts
 async function fetchPosts() {
     try {
         const res = await fetch('/api/posts');
@@ -77,6 +94,7 @@ async function fetchPosts() {
     }
 }
 
+// Function to render a post
 function renderPost(index) {
     if (index < 0 || index >= posts.length) return;
 
@@ -119,6 +137,7 @@ function renderPost(index) {
     postsContainer.appendChild(postElement);
 }
 
+// Function to like a post
 async function likePost(index) {
     const post = posts[index];
     const username = currentUser ? currentUser.username : null;
@@ -152,6 +171,7 @@ async function likePost(index) {
     }
 }
 
+// Function to follow a user
 async function followUser(username) {
     try {
         const res = await fetch('/api/follow', {
@@ -171,6 +191,7 @@ async function followUser(username) {
     }
 }
 
+// Function to share a post
 function sharePost(postId) {
     const uniqueLink = `${window.location.origin}/foryou?post=${postId}`;
     navigator.clipboard.writeText(uniqueLink).then(() => {
@@ -180,6 +201,7 @@ function sharePost(postId) {
     });
 }
 
+// Function to navigate between posts
 function navigatePost(direction) {
     if (isTransitioning) return;
     isTransitioning = true;
@@ -195,6 +217,7 @@ function navigatePost(direction) {
     }, 300);
 }
 
+// Event listeners for touch navigation
 let startY = 0;
 window.addEventListener('touchstart', (e) => {
     startY = e.touches[0].clientY;
@@ -208,14 +231,15 @@ window.addEventListener('touchend', (e) => {
     else if (distance < -50) navigatePost(-1);
 });
 
+// Function to navigate to a new route
 function navigateTo(route) {
     window.location.href = route;
 }
 
 // Fetch user and posts when the app loads
 async function initializeApp() {
-    await fetchCurrentUser();
-    await fetchPosts();
+    await fetchCurrentUser();  // Fetch the current user
+    await fetchPosts();        // Fetch all posts
 }
 
 initializeApp();
