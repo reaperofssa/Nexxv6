@@ -7,49 +7,75 @@
     <link rel="stylesheet" href="/css/login.css">
 </head>
 <body>
-    <form id="authForm">
-        <input type="text" id="username" name="username" placeholder="Username" required>
-        <input type="password" id="password" name="password" placeholder="Password" required>
-        <input type="file" id="profilePicture" name="profilePicture">
-        <button type="submit">Login / Sign Up</button>
-    </form>
+    <div class="container">
+        <h1>Welcome</h1>
+        <form id="authForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter your username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            </div>
+            <div class="form-group">
+                <label for="profilePicture">Profile Picture (Optional)</label>
+                <input type="file" id="profilePicture" name="profilePicture" accept="image/*">
+            </div>
+            <button type="submit">Login / Sign Up</button>
+        </form>
+    </div>
     <script>
         document.getElementById('authForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
             const profilePicture = document.getElementById('profilePicture').files[0];
 
-            // First, authenticate the user
-            const res = await fetch('/api/auth', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password }),
-            });
+            if (!username || !password) {
+                alert('Username and password are required.');
+                return;
+            }
 
-            const data = await res.json();
+            try {
+                // Authenticate user
+                const authResponse = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password }),
+                });
+                const authData = await authResponse.json();
 
-            if (data.success) {
-                // If profile picture is provided, upload it
-                if (profilePicture) {
-                    const pictureForm = new FormData();
-                    pictureForm.append('file', profilePicture);
-                    pictureForm.append('username', username);
-
-                    await fetch('/api/profile-picture', {
-                        method: 'POST',
-                        body: pictureForm,
-                    });
+                if (!authData.success) {
+                    alert(authData.message);
+                    return;
                 }
 
-                // Store the username locally and navigate to the For You page
+                // If profile picture is uploaded, send it
+                if (profilePicture) {
+                    const formData = new FormData();
+                    formData.append('file', profilePicture);
+                    formData.append('username', username);
+
+                    const pictureResponse = await fetch('/api/profile-picture', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    const pictureData = await pictureResponse.json();
+                    if (!pictureData.success) {
+                        alert('Failed to upload profile picture.');
+                        return;
+                    }
+                }
+
+                // Store username locally and redirect
                 localStorage.setItem('username', username);
                 window.location.href = '/foryou';
-            } else {
-                alert(data.message); // Show error message
+            } catch (error) {
+                console.error('An error occurred:', error);
+                alert('Something went wrong. Please try again.');
             }
         });
     </script>
