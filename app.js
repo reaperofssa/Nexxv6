@@ -89,8 +89,7 @@ app.post('/api/post', upload.single('file'), (req, res) => {
         caption,
         file,
         timestamp: Date.now(),
-        liked: false,
-        likes: 0,
+        likedBy: [], // Initialize the likedBy array
         shares: 0,
     };
 
@@ -101,29 +100,58 @@ app.post('/api/post', upload.single('file'), (req, res) => {
 
 // API to fetch posts
 app.get('/api/posts', (req, res) => {
-    res.json(posts.sort((a, b) => b.timestamp - a.timestamp));
+    const username = req.query.username || ''; // Get current user from query for personalization (if needed)
+    const formattedPosts = posts.map((post) => ({
+        id: post.id,
+        username: post.username,
+        caption: post.caption,
+        file: post.file,
+        timestamp: post.timestamp,
+        likes: post.likedBy.length, // Calculate likes dynamically
+        likedBy: post.likedBy, // Include likedBy array
+        liked: username ? post.likedBy.includes(username) : false, // Check if the current user liked the post
+        shares: post.shares,
+    }));
+
+    res.json(formattedPosts.sort((a, b) => b.timestamp - a.timestamp));
 });
 
 // API to like/unlike a post
 app.post('/api/like', (req, res) => {
-    const { postId, liked, username } = req.body;
+    const { postId, username } = req.body;
+
+    if (!username) {
+        return res.status(400).json({ success: false, message: 'Username is required.' });
+    }
 
     const post = posts.find((p) => p.id === postId);
 
     if (post) {
-        // Initialize `userLikes` if not already present
-        post.userLikes = post.userLikes || {};
+        if (!post.likedBy) {
+            post.likedBy = []; // Initialize likedBy if it doesn't exist
+        }
 
-        // Update the user's like status
-        post.userLikes[username] = liked;
+        if (post.likedBy.includes(username)) {
+            // Unlike post
+            post.likedBy = post.likedBy.filter((user) => user !== username);
+        } else {
+            // Like post
+            post.likedBy.push(username);
+        }
 
-        // Recalculate the total likes
-        post.likes = Object.values(post.userLikes).filter(Boolean).length;
+        // Update post likes count
+        post.likes = post.likedBy.length;
 
+        // Save updated posts data
         fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
-        res.json({ success: true, liked: post.userLikes[username], likes: post.likes });
+        res.json({
+            success: true,
+            liked: post.likedBy.includes(username),
+            likes: post.likes,
+            likedBy: post.likedBy,
+        });
     } else {
-        res.status(404).json({ success: false, message: 'Post not found' });
+        res.status(404).json({ success: false, message: 'Post not found.' });
     }
 });
 
