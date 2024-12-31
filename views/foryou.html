@@ -87,7 +87,7 @@
         <div class="overlay">
           <h3 class="username" onclick="navigateTo('/user/${post.username}')">
             ${post.username}
-            ${isVerified ? `<img src="https://im.ge/i/IMG-9380.zZaAyK" alt="Verified" class="verified-mark" onerror="this.src='/images/verified-placeholder.png'">` : ''}
+            ${isVerified ? `<img src="/images/verified-placeholder.png" alt="Verified" class="verified-mark" onerror="this.src='/images/verified-placeholder.png'">` : ''}
           </h3>
           <p class="caption">${post.caption}</p>
           <button class="like-button" onclick="likePost(${index})">
