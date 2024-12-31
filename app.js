@@ -225,7 +225,8 @@ app.post('/api/follow', (req, res) => {
 
 // API to get my profile details
 app.get('/api/me', (req, res) => {
-    const username = req.query.username;
+    // Retrieve the username from request headers or query parameters
+    const username = req.headers['x-username'] || req.query.username;
 
     if (!username) {
         return res.status(400).json({ success: false, message: 'Username is required' });
