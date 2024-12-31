@@ -68,6 +68,32 @@ app.get('/me', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/me.html'));
 });
 
+// User Profile Page
+app.get('/user/:username', (req, res) => {
+    const username = req.params.username;
+    const user = users.find((u) => u.username === username);
+
+    if (user) {
+        res.sendFile(path.join(__dirname, 'views/user.html'));
+    } else {
+        res.status(404).send('User not found.');
+    }
+});
+
+// API to get user profile details
+app.get('/api/user/:username', (req, res) => {
+    const username = req.params.username;
+
+    const user = users.find((u) => u.username === username);
+    const userPosts = posts.filter((p) => p.username === username);
+
+    if (user) {
+        res.json({ success: true, user, posts: userPosts });
+    } else {
+        res.status(404).json({ success: false, message: 'User not found.' });
+    }
+});
+
 // API to sign up/login
 app.post('/api/auth', (req, res) => {
     const { username, password } = req.body;
