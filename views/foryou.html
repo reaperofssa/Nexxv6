@@ -43,12 +43,27 @@
 
   <script>
     let currentIndex = 0;
-    let posts = [];
-    let isTransitioning = false;
-    let verifiedUsers = [];
+let posts = [];
+let isTransitioning = false;
+let verifiedUsers = [];
+let currentUser = null; // To store the logged-in user's details
 
-    async function fetchPosts() {
-      try {
+async function fetchCurrentUser() {
+    try {
+        const res = await fetch('/api/me');
+        const data = await res.json();
+        if (data.success) {
+            currentUser = data.user;
+        } else {
+            console.error('Failed to fetch current user:', data.message);
+        }
+    } catch (error) {
+        console.error('Error fetching current user:', error);
+    }
+}
+
+async function fetchPosts() {
+    try {
         const res = await fetch('/api/posts');
         posts = await res.json();
 
@@ -57,30 +72,30 @@
         verifiedUsers = verifiedData.verifiedUsers || [];
 
         renderPost(currentIndex);
-      } catch (error) {
+    } catch (error) {
         console.error('Error fetching posts or verified users:', error);
-      }
     }
+}
 
-    function renderPost(index) {
-      if (index < 0 || index >= posts.length) return;
+function renderPost(index) {
+    if (index < 0 || index >= posts.length) return;
 
-      const postsContainer = document.getElementById('posts-container');
-      postsContainer.innerHTML = '';
+    const postsContainer = document.getElementById('posts-container');
+    postsContainer.innerHTML = '';
 
-      const post = posts[index];
-      const isVerified = verifiedUsers.includes(post.username);
+    const post = posts[index];
+    const isVerified = verifiedUsers.includes(post.username);
 
-      const postElement = document.createElement('div');
-      postElement.className = 'post';
+    const postElement = document.createElement('div');
+    postElement.className = 'post';
 
-      const mediaContent = post.file
+    const mediaContent = post.file
         ? post.file.endsWith('.mp4')
-          ? `<video src="${post.file}" controls class="media"></video>`
-          : `<img src="${post.file}" alt="Post Media" class="media" onerror="this.src='/images/placeholder.png'">`
+            ? `<video src="${post.file}" controls class="media"></video>`
+            : `<img src="${post.file}" alt="Post Media" class="media" onerror="this.src='/images/placeholder.png'">`
         : `<img src="/images/placeholder.png" alt="Placeholder" class="media">`;
 
-      postElement.innerHTML = `
+    postElement.innerHTML = `
         <div class="media-container">
           ${mediaContent}
         </div>
@@ -99,89 +114,111 @@
           <span class="like-count">${post.likes || 0} likes</span>
           <button class="share-button" onclick="sharePost('${post.id}')">🔗 Share</button>
         </div>
-      `;
+    `;
 
-      postsContainer.appendChild(postElement);
+    postsContainer.appendChild(postElement);
+}
+
+async function likePost(index) {
+    const post = posts[index];
+    const username = currentUser ? currentUser.username : null;
+
+    if (!username) {
+        alert('You need to log in to like posts.');
+        return;
     }
 
-    async function likePost(index) {
-      const post = posts[index];
-      post.liked = !post.liked;
-      post.likes = post.liked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1);
+    const updatedLiked = !post.liked;
 
-      try {
-        await fetch('/api/like', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ postId: post.id, liked: post.liked }),
+    try {
+        const response = await fetch('/api/like', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ postId: post.id, username, liked: updatedLiked }),
         });
-        renderPost(index);
-      } catch (error) {
-        console.error('Error updating like:', error);
-      }
-    }
 
-    async function followUser(username) {
-      try {
+        const data = await response.json();
+
+        if (data.success) {
+            // Update the post locally with server response
+            post.liked = updatedLiked;
+            post.likes = data.likes;
+            renderPost(index);
+        } else {
+            console.error('Error updating like:', data.message);
+        }
+    } catch (error) {
+        console.error('Error updating like:', error);
+    }
+}
+
+async function followUser(username) {
+    try {
         const res = await fetch('/api/follow', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username }),
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username }),
         });
 
         if (res.ok) {
-          const result = await res.json();
-          alert(result.message || 'Follow status updated!');
-          posts[currentIndex].following = !posts[currentIndex].following;
-          renderPost(currentIndex);
+            const result = await res.json();
+            alert(result.message || 'Follow status updated!');
+            posts[currentIndex].following = !posts[currentIndex].following;
+            renderPost(currentIndex);
         }
-      } catch (error) {
+    } catch (error) {
         console.error('Error following user:', error);
-      }
     }
+}
 
-    function sharePost(postId) {
-      const uniqueLink = `${window.location.origin}/foryou?post=${postId}`;
-      navigator.clipboard.writeText(uniqueLink).then(() => {
+function sharePost(postId) {
+    const uniqueLink = `${window.location.origin}/foryou?post=${postId}`;
+    navigator.clipboard.writeText(uniqueLink).then(() => {
         alert('Post link copied to clipboard!');
-      }).catch(err => {
+    }).catch(err => {
         console.error('Failed to copy link:', err);
-      });
-    }
+    });
+}
 
-    function navigatePost(direction) {
-      if (isTransitioning) return;
-      isTransitioning = true;
+function navigatePost(direction) {
+    if (isTransitioning) return;
+    isTransitioning = true;
 
-      const newIndex = currentIndex + direction;
-      if (newIndex >= 0 && newIndex < posts.length) {
+    const newIndex = currentIndex + direction;
+    if (newIndex >= 0 && newIndex < posts.length) {
         currentIndex = newIndex;
         renderPost(currentIndex);
-      }
+    }
 
-      setTimeout(() => {
+    setTimeout(() => {
         isTransitioning = false;
-      }, 300);
-    }
+    }, 300);
+}
 
-    let startY = 0;
-    window.addEventListener('touchstart', (e) => {
-      startY = e.touches[0].clientY;
-    });
+let startY = 0;
+window.addEventListener('touchstart', (e) => {
+    startY = e.touches[0].clientY;
+});
 
-    window.addEventListener('touchend', (e) => {
-      const endY = e.changedTouches[0].clientY;
-      const distance = startY - endY;
+window.addEventListener('touchend', (e) => {
+    const endY = e.changedTouches[0].clientY;
+    const distance = startY - endY;
 
-      if (distance > 50) navigatePost(1);
-      else if (distance < -50) navigatePost(-1);
-    });
+    if (distance > 50) navigatePost(1);
+    else if (distance < -50) navigatePost(-1);
+});
 
-    function navigateTo(route) {
-      window.location.href = route;
-    }
+function navigateTo(route) {
+    window.location.href = route;
+}
 
-    fetchPosts();
+// Fetch user and posts when the app loads
+async function initializeApp() {
+    await fetchCurrentUser();
+    await fetchPosts();
+}
+
+initializeApp();
   </script>
 </body>
 </html>
