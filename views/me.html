@@ -34,31 +34,17 @@
 }
 
 async function loadProfile() {
-    const username = localStorage.getItem('username'); // Retrieve logged-in username
+    const pathUsername = window.location.pathname.split('/').pop();  // Get the username from URL
+    const username = pathUsername === 'me' 
+        ? localStorage.getItem('username') 
+        : pathUsername;
 
-    if (!username) {
-        alert('No user logged in!');
-        return;
-    }
-
-    let isVerified = false;
+    const apiUrl = pathUsername === 'me' 
+        ? `/api/me?username=${username}` 
+        : `/api/user/${username}`;
 
     try {
-        // Fetch verified users
-        const verifiedRes = await fetch('/verified.json');
-        const verifiedData = await verifiedRes.json();
-        const verifiedUsers = verifiedData.verifiedUsers || [];
-        isVerified = verifiedUsers.includes(username);
-
-        // Fetch user data from /api/me
-        const res = await fetch('/api/me', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-username': username, // Send username in the header
-            },
-        });
-
+        const res = await fetch(apiUrl);
         const data = await res.json();
 
         if (res.ok && data.success) {
@@ -68,7 +54,8 @@ async function loadProfile() {
             const usernameElement = document.getElementById('username');
             usernameElement.textContent = `@${user.username}`;
 
-            if (isVerified) {
+            // Check if the user is verified and add a verified mark
+            if (user.isVerified) {
                 const verifiedMark = document.createElement('img');
                 verifiedMark.src = '/images/verified-placeholder.png';
                 verifiedMark.alt = 'Verified';
@@ -88,8 +75,11 @@ async function loadProfile() {
                 usernameElement.appendChild(verifiedMark);
             }
 
+            // Update followers and following count
             document.getElementById('followers').textContent = `${user.followers} Followers`;
             document.getElementById('following').textContent = `${user.following.length} Following`;
+
+            // Update profile picture
             document.getElementById('profilePicture').src = user.profilePicture || '/images/default-profile.png';
 
             // Populate posts
