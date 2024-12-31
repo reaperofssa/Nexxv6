@@ -8,6 +8,16 @@ const app = express();
 const PORT = 3000;
 
 // Middleware
+const express = require('express');
+const path = require('path');
+const bodyParser = require('body-parser');
+const multer = require('multer');
+const fs = require('fs');
+
+// Set up the app
+const app = express();
+
+// Middleware for serving static files
 app.use(express.static(path.join(__dirname)));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static('views'));
@@ -17,18 +27,25 @@ app.use(bodyParser.json());
 // File upload setup
 const upload = multer({ dest: 'public/uploads/' });
 
-// Load user and post data
+// File paths
 const USERS_FILE = './users.json';
 const POSTS_FILE = './posts.json';
 
+// Helper function to load data from files
 function loadFile(filePath) {
     if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, '[]');
-    return JSON.parse(fs.readFileSync(filePath));
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 }
 
+// Load user data
 let users = loadFile(USERS_FILE);
-let posts = loadFile(POSTS_FILE);
 
+// Load post data
+let posts = [];
+if (fs.existsSync(POSTS_FILE)) {
+    const data = fs.readFileSync(POSTS_FILE, 'utf-8');
+    posts = JSON.parse(data);
+}
 // Routes
 app.get('/', (req, res) => {
     const username = req.query.username || '';
@@ -83,20 +100,31 @@ app.post('/api/post', upload.single('file'), (req, res) => {
     const { username, caption } = req.body;
     const file = req.file ? `/uploads/${req.file.filename}` : '';
 
+    // Create the new post object
     const newPost = {
-    id: posts.length + 1,
-    username,
-    caption,
-    file,
-    timestamp: Date.now(),
-    likedBy: [], // Array to store usernames of users who liked the post
-    likes: 0,
-    shares: 0,
-};
+        id: posts.length + 1,
+        username,
+        caption,
+        file,
+        timestamp: Date.now(),
+        likedBy: [], // Array to store usernames of users who liked the post
+        likes: 0,
+        shares: 0,
+    };
 
+    // Add the new post to the array
     posts.push(newPost);
-    fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
-    res.json({ success: true, post: newPost });
+
+    // Save the updated posts array to the file
+    fs.writeFile(POSTS_FILE, JSON.stringify(posts, null, 2), (err) => {
+        if (err) {
+            console.error('Failed to save posts:', err); // Log the error for debugging
+            return res.status(500).json({ success: false, message: 'Failed to save posts.' });
+        }
+
+        // Respond with success if no error
+        res.json({ success: true, post: newPost });
+    });
 });
 
 // API to fetch posts
@@ -117,6 +145,7 @@ app.get('/api/posts', (req, res) => {
 app.post('/api/like', (req, res) => {
     const { postId, username, liked } = req.body;
 
+    // Validate input
     if (!username) {
         return res.status(400).json({ success: false, message: 'Username is required.' });
     }
@@ -126,6 +155,7 @@ app.post('/api/like', (req, res) => {
     if (post) {
         const userIndex = post.likedBy.indexOf(username);
 
+        // Handle like/unlike logic
         if (liked && userIndex === -1) {
             // Add user to likedBy and increment likes
             post.likedBy.push(username);
@@ -136,9 +166,18 @@ app.post('/api/like', (req, res) => {
             post.likes = Math.max(0, post.likes - 1);
         }
 
-        fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
-        res.json({ success: true, liked, likes: post.likes });
+        // Save the updated posts to the file
+        fs.writeFile(POSTS_FILE, JSON.stringify(posts, null, 2), (err) => {
+            if (err) {
+                console.error('Failed to save posts:', err); // Log error for debugging
+                return res.status(500).json({ success: false, message: 'Failed to save posts.' });
+            }
+
+            // Respond with success if no errors
+            res.json({ success: true, liked, likes: post.likes });
+        });
     } else {
+        // Post not found
         res.status(404).json({ success: false, message: 'Post not found' });
     }
 });
