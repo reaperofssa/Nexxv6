@@ -34,20 +34,20 @@
         }
 
         async function loadProfile() {
-            const username = localStorage.getItem('username'); // Fetch username from local storage
+            const username = localStorage.getItem('username'); // Retrieve logged-in username
 
             if (!username) {
-                alert('No user is logged in.');
+                alert('No user logged in!');
                 return;
             }
 
             try {
-                // Fetch profile data
+                // Fetch user data from /api/me
                 const res = await fetch('/api/me', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-username': username, // Send username in header
+                        'x-username': username, // Send username in the header
                     },
                 });
 
@@ -56,20 +56,31 @@
                 if (res.ok && data.success) {
                     const { user, posts } = data;
 
-                    // Update profile details
+                    // Update profile info
                     const usernameElement = document.getElementById('username');
                     usernameElement.textContent = `@${user.username}`;
+
+                    if (user.isVerified) {
+                        const verifiedMark = document.createElement('img');
+                        verifiedMark.src = '/images/verified-placeholder.png';
+                        verifiedMark.alt = 'Verified';
+                        verifiedMark.style.width = '16px';
+                        verifiedMark.style.height = '16px';
+                        verifiedMark.style.marginLeft = '6px';
+                        usernameElement.appendChild(verifiedMark);
+                    }
 
                     document.getElementById('followers').textContent = `${user.followers} Followers`;
                     document.getElementById('following').textContent = `${user.following.length} Following`;
                     document.getElementById('profilePicture').src = user.profilePicture || '/images/default-profile.png';
 
-                    // Display user posts
-                    document.getElementById('myPosts').innerHTML = posts.map(post => `
+                    // Populate posts
+                    const postsContainer = document.getElementById('myPosts');
+                    postsContainer.innerHTML = posts.map(post => `
                         <div class="post">
                             <div class="media-container" onclick="openPost('${post.id}')">
                                 ${post.file.endsWith('.mp4') 
-                                    ? `<video src="${post.file}" controls class="media"></video>` 
+                                    ? `<video src="${post.file}" class="media" controls></video>` 
                                     : `<img src="${post.file}" alt="Post Image" class="media">`}
                             </div>
                             <p>${post.caption}</p>
