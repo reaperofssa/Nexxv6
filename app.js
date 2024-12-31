@@ -196,47 +196,37 @@ app.post('/api/follow', (req, res) => {
     const followerUser = users.find((u) => u.username === follower);
     const followeeUser = users.find((u) => u.username === followee);
 
-    if (followerUser && followeeUser) {
-        if (followerUser.following.includes(followee)) {
-            // Unfollow
-            followerUser.following = followerUser.following.filter((f) => f !== followee);
-            followeeUser.followersList = followeeUser.followersList.filter((f) => f !== follower);
-            followeeUser.followers = Math.max(0, followeeUser.followers - 1);
-        } else {
-            // Follow
-            followerUser.following.push(followee);
-            followeeUser.followersList.push(follower);
-            followeeUser.followers += 1;
-        }
+    if (!followerUser || !followeeUser) {
+        return res.status(404).json({ success: false, message: 'User not found.' });
+    }
 
-        // Save updated users data to the file
+    // Initialize followersList if it doesn't exist
+    if (!followeeUser.followersList) followeeUser.followersList = [];
+
+    if (followerUser.following.includes(followee)) {
+        // Unfollow logic
+        followerUser.following = followerUser.following.filter((f) => f !== followee);
+        followeeUser.followersList = followeeUser.followersList.filter((f) => f !== follower);
+        followeeUser.followers = Math.max(0, followeeUser.followers - 1); // Prevent negative counts
+    } else {
+        // Follow logic
+        followerUser.following.push(followee);
+        followeeUser.followersList.push(follower);
+        followeeUser.followers = (followeeUser.followers || 0) + 1; // Handle uninitialized followers count
+    }
+
+    // Save updated users data to the file
+    try {
         fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
         res.json({ 
             success: true, 
-            followerCount: followeeUser.followers, 
-            followersList: followeeUser.followersList 
+            followersCount: followeeUser.followers, 
+            followingCount: followerUser.following.length,
+            followersList: followeeUser.followersList, 
         });
-    } else {
-        res.status(404).json({ success: false, message: 'User not found.' });
-    }
-});
-
-// API to get my profile details
-app.get('/api/me', (req, res) => {
-    // Retrieve the username from request headers or query parameters
-    const username = req.headers['x-username'] || req.query.username;
-
-    if (!username) {
-        return res.status(400).json({ success: false, message: 'Username is required' });
-    }
-
-    const user = users.find((u) => u.username === username);
-    const userPosts = posts.filter((p) => p.username === username);
-
-    if (user) {
-        res.json({ success: true, user, posts: userPosts });
-    } else {
-        res.status(404).json({ success: false, message: 'User not found.' });
+    } catch (error) {
+        console.error('Error saving users data:', error);
+        res.status(500).json({ success: false, message: 'Failed to save user data.' });
     }
 });
 
