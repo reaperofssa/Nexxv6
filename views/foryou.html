@@ -172,19 +172,31 @@ async function likePost(index) {
 }
 
 // Function to follow a user
-async function followUser(username) {
+async function followUser(followee, index) {
+    const follower = localStorage.getItem('username'); // Get the logged-in user's username
+
+    if (!follower) {
+        alert('You need to log in to follow users.');
+        return;
+    }
+
     try {
         const res = await fetch('/api/follow', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username }),
+            body: JSON.stringify({ follower, followee }), // Send both follower and followee
         });
 
-        if (res.ok) {
-            const result = await res.json();
-            alert(result.message || 'Follow status updated!');
-            posts[currentIndex].following = !posts[currentIndex].following;
-            renderPost(currentIndex);
+        const data = await res.json();
+
+        if (data.success) {
+            alert('Follow status updated successfully!');
+            // Update the follow status locally
+            posts[index].following = !posts[index].following;
+            posts[index].followers = data.followerCount; // Update follower count if included in response
+            renderPost(index); // Re-render the updated post
+        } else {
+            alert(`Error: ${data.message}`);
         }
     } catch (error) {
         console.error('Error following user:', error);
