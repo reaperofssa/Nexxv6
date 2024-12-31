@@ -30,81 +30,99 @@
 
     <script>
         function navigateTo(route) {
-            window.location.href = route;
-        }
+    window.location.href = route;
+}
 
-        async function loadProfile() {
-            const username = localStorage.getItem('username'); // Retrieve logged-in username
+async function loadProfile() {
+    const username = localStorage.getItem('username'); // Retrieve logged-in username
 
-            if (!username) {
-                alert('No user logged in!');
-                return;
+    if (!username) {
+        alert('No user logged in!');
+        return;
+    }
+
+    let isVerified = false;
+
+    try {
+        // Fetch verified users
+        const verifiedRes = await fetch('/verified.json');
+        const verifiedData = await verifiedRes.json();
+        const verifiedUsers = verifiedData.verifiedUsers || [];
+        isVerified = verifiedUsers.includes(username);
+
+        // Fetch user data from /api/me
+        const res = await fetch('/api/me', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-username': username, // Send username in the header
+            },
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            const { user, posts } = data;
+
+            // Update profile info
+            const usernameElement = document.getElementById('username');
+            usernameElement.textContent = `@${user.username}`;
+
+            if (isVerified) {
+                const verifiedMark = document.createElement('img');
+                verifiedMark.src = '/images/verified-placeholder.png';
+                verifiedMark.alt = 'Verified';
+
+                // Verified styling
+                verifiedMark.style.width = '16px';
+                verifiedMark.style.height = '16px';
+                verifiedMark.style.marginLeft = '6px';
+                verifiedMark.style.verticalAlign = 'baseline'; // Adjust alignment
+                verifiedMark.style.position = 'relative'; // Relative positioning
+                verifiedMark.style.top = '3px'; // Slightly lower
+                verifiedMark.style.objectFit = 'contain';
+                verifiedMark.style.background = 'none'; // Remove background
+                verifiedMark.style.border = 'none';    // Remove border
+                verifiedMark.style.borderRadius = '0'; // No circular borders
+
+                usernameElement.appendChild(verifiedMark);
             }
 
-            try {
-                // Fetch user data from /api/me
-                const res = await fetch('/api/me', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-username': username, // Send username in the header
-                    },
-                });
+            document.getElementById('followers').textContent = `${user.followers} Followers`;
+            document.getElementById('following').textContent = `${user.following.length} Following`;
+            document.getElementById('profilePicture').src = user.profilePicture || '/images/default-profile.png';
 
-                const data = await res.json();
-
-                if (res.ok && data.success) {
-                    const { user, posts } = data;
-
-                    // Update profile info
-                    const usernameElement = document.getElementById('username');
-                    usernameElement.textContent = `@${user.username}`;
-
-                    if (user.isVerified) {
-                        const verifiedMark = document.createElement('img');
-                        verifiedMark.src = '/images/verified-placeholder.png';
-                        verifiedMark.alt = 'Verified';
-                        verifiedMark.style.width = '16px';
-                        verifiedMark.style.height = '16px';
-                        verifiedMark.style.marginLeft = '6px';
-                        usernameElement.appendChild(verifiedMark);
-                    }
-
-                    document.getElementById('followers').textContent = `${user.followers} Followers`;
-                    document.getElementById('following').textContent = `${user.following.length} Following`;
-                    document.getElementById('profilePicture').src = user.profilePicture || '/images/default-profile.png';
-
-                    // Populate posts
-                    const postsContainer = document.getElementById('myPosts');
-                    postsContainer.innerHTML = posts.map(post => `
-                        <div class="post">
-                            <div class="media-container" onclick="openPost('${post.id}')">
-                                ${post.file.endsWith('.mp4') 
-                                    ? `<video src="${post.file}" class="media" controls></video>` 
-                                    : `<img src="${post.file}" alt="Post Image" class="media">`}
-                            </div>
-                            <p>${post.caption}</p>
-                            <div class="post-stats">
-                                <span>❤️ ${post.likes}</span>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            } catch (error) {
-                console.error('Error loading profile:', error);
-                alert('An error occurred while loading the profile.');
-            }
+            // Populate posts
+            const postsContainer = document.getElementById('myPosts');
+            postsContainer.innerHTML = posts.map(post => `
+                <div class="post">
+                    <div class="media-container" onclick="openPost('${post.id}')">
+                        ${post.file.endsWith('.mp4') 
+                            ? `<video src="${post.file}" class="media" controls></video>` 
+                            : `<img src="${post.file}" alt="Post Image" class="media">`}
+                    </div>
+                    <p>${post.caption}</p>
+                    <div class="post-stats">
+                        <span>❤️ ${post.likes}</span>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            alert('Error: ' + data.message);
         }
+    } catch (error) {
+        console.error('Error loading profile:', error);
+        alert('An error occurred while loading the profile.');
+    }
+}
 
-        function openPost(postId) {
-            const postUrl = `/foryou?post=${postId}`;
-            window.location.href = postUrl;
-        }
+function openPost(postId) {
+    const postUrl = `/foryou?post=${postId}`;
+    window.location.href = postUrl;
+}
 
-        // Load profile on page load
-        loadProfile();
+// Load profile on page load
+loadProfile();
     </script>
 </body>
 </html>
