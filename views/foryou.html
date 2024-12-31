@@ -105,27 +105,48 @@
     }
 
     async function likePost(index) {
-      const post = posts[index];
-      const username = post.username; // The username associated with the post
-      const pathUsername = window.location.pathname.includes('/me') ? 'me' : 'user';
-      const apiUrl = pathUsername === 'me'
-        ? `/api/me?username=${username}`
-        : `/api/user/${username}`;
+  const post = posts[index];
 
+  // Determine username
+  const pathUsername = window.location.pathname.split('/').pop();
+  const username = pathUsername === 'me'
+    ? localStorage.getItem('username') 
+    : pathUsername;
+
+  // Construct the API URL
+  const apiUrl = `/api/like`;
+
+  // Toggle like status
+  post.liked = !post.liked;
+  post.likes = post.liked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1);
+
+  try {
+    // Send like request
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        postId: post.id,
+        liked: post.liked,
+        username, // Include the username in the payload
+      }),
+    });
+
+    if (res.ok) {
+      renderPost(index);
+    } else {
+      console.error('Failed to update likes:', await res.text());
+      // Revert changes if API call fails
       post.liked = !post.liked;
-      post.likes = post.liked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1);
-
-      try {
-        await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ postId: post.id, liked: post.liked }),
-        });
-        renderPost(index);
-      } catch (error) {
-        console.error('Error updating like:', error);
-      }
+      post.likes = post.liked ? Math.max(0, (post.likes || 0) - 1) : (post.likes || 0) + 1;
     }
+  } catch (error) {
+    console.error('Error updating like:', error);
+    // Revert changes on error
+    post.liked = !post.liked;
+    post.likes = post.liked ? Math.max(0, (post.likes || 0) - 1) : (post.likes || 0) + 1;
+  }
+}
 
     async function followUser(username) {
       const pathUsername = window.location.pathname.includes('/me') ? 'me' : 'user';
