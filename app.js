@@ -7,13 +7,6 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
-// Middleware
-const express = require('express');
-const path = require('path');
-const bodyParser = require('body-parser');
-const multer = require('multer');
-const fs = require('fs');
-
 // Set up the app
 const app = express();
 
