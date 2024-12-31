@@ -84,15 +84,15 @@ app.post('/api/post', upload.single('file'), (req, res) => {
     const file = req.file ? `/uploads/${req.file.filename}` : '';
 
     const newPost = {
-        id: posts.length + 1,
-        username,
-        caption,
-        file,
-        timestamp: Date.now(),
-        liked: false,
-        likes: 0,
-        shares: 0,
-    };
+    id: posts.length + 1,
+    username,
+    caption,
+    file,
+    timestamp: Date.now(),
+    likedBy: [], // Array to store usernames of users who liked the post
+    likes: 0,
+    shares: 0,
+};
 
     posts.push(newPost);
     fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
@@ -101,21 +101,43 @@ app.post('/api/post', upload.single('file'), (req, res) => {
 
 // API to fetch posts
 app.get('/api/posts', (req, res) => {
-    res.json(posts.sort((a, b) => b.timestamp - a.timestamp));
+    const username = req.query.username;
+
+    const response = posts
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .map((post) => ({
+            ...post,
+            liked: username ? post.likedBy.includes(username) : false, // Check if the user liked the post
+        }));
+
+    res.json(response);
 });
 
 // API to like/unlike a post
 app.post('/api/like', (req, res) => {
-    const { postId, liked } = req.body;
+    const { postId, username, liked } = req.body;
+
+    if (!username) {
+        return res.status(400).json({ success: false, message: 'Username is required.' });
+    }
 
     const post = posts.find((p) => p.id === postId);
 
     if (post) {
-        post.liked = liked;
-        post.likes = liked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1);
+        const userIndex = post.likedBy.indexOf(username);
+
+        if (liked && userIndex === -1) {
+            // Add user to likedBy and increment likes
+            post.likedBy.push(username);
+            post.likes += 1;
+        } else if (!liked && userIndex !== -1) {
+            // Remove user from likedBy and decrement likes
+            post.likedBy.splice(userIndex, 1);
+            post.likes = Math.max(0, post.likes - 1);
+        }
 
         fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
-        res.json({ success: true, liked: post.liked, likes: post.likes });
+        res.json({ success: true, liked, likes: post.likes });
     } else {
         res.status(404).json({ success: false, message: 'Post not found' });
     }
