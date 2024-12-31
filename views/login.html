@@ -13,7 +13,6 @@
         <input type="file" id="profilePicture" name="profilePicture">
         <button type="submit">Login / Sign Up</button>
     </form>
-
     <script>
         document.getElementById('authForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -34,9 +33,6 @@
             const data = await res.json();
 
             if (data.success) {
-                // Store the username in localStorage after successful login or signup
-                localStorage.setItem('username', username);
-
                 // If profile picture is provided, upload it
                 if (profilePicture) {
                     const pictureForm = new FormData();
@@ -49,18 +45,11 @@
                     });
                 }
 
-                // Redirect to For You page
+                // Store the username locally and navigate to the For You page
+                localStorage.setItem('username', username);
                 window.location.href = '/foryou';
             } else {
                 alert(data.message); // Show error message
-            }
-        });
-
-        // Redirect to the For You page if the user is already logged in
-        window.addEventListener('load', () => {
-            const username = localStorage.getItem('username');
-            if (username) {
-                window.location.href = '/foryou';
             }
         });
     </script>
