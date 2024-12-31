@@ -15,16 +15,26 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // File upload setup
-const upload = multer({ dest: 'public/uploads/' });
+const upload = multer({
+    dest: 'public/uploads/',
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'video/mp4'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Unsupported file type.'));
+        }
+    },
+});
 
-// Load user and post data
-const USERS_FILE = './users.json';
-const POSTS_FILE = './posts.json';
-
+// File loading utility
 function loadFile(filePath) {
     if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, '[]');
     return JSON.parse(fs.readFileSync(filePath));
 }
+
+const USERS_FILE = './users.json';
+const POSTS_FILE = './posts.json';
 
 let users = loadFile(USERS_FILE);
 let posts = loadFile(POSTS_FILE);
@@ -39,27 +49,15 @@ app.get('/', (req, res) => {
     }
 });
 
-// Login Page
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/login.html'));
 });
 
-// For You Page
 app.get('/foryou', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/foryou.html'));
 });
 
-// Post Page
-app.get('/post', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/post.html'));
-});
-
-// Me Page
-app.get('/me', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/me.html'));
-});
-
-// API to sign up/login
+// User Authentication
 app.post('/api/auth', (req, res) => {
     const { username, password } = req.body;
 
@@ -71,14 +69,14 @@ app.post('/api/auth', (req, res) => {
             return res.json({ success: false, message: 'Incorrect password.' });
         }
     } else {
-        const newUser = { username, password, followers: 0, following: [], profilePicture: '' };
+        const newUser = { username, password, followers: 0, following: [], likedPosts: [], profilePicture: '' };
         users.push(newUser);
         fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
         return res.json({ success: true, user: newUser });
     }
 });
 
-// API to create a post
+// Create a post
 app.post('/api/post', upload.single('file'), (req, res) => {
     const { username, caption } = req.body;
     const file = req.file ? `/uploads/${req.file.filename}` : '';
@@ -89,8 +87,7 @@ app.post('/api/post', upload.single('file'), (req, res) => {
         caption,
         file,
         timestamp: Date.now(),
-        liked: false,
-        likes: 0,
+        likes: [],
         shares: 0,
     };
 
@@ -99,45 +96,35 @@ app.post('/api/post', upload.single('file'), (req, res) => {
     res.json({ success: true, post: newPost });
 });
 
-// API to fetch posts
+// Fetch posts
 app.get('/api/posts', (req, res) => {
     res.json(posts.sort((a, b) => b.timestamp - a.timestamp));
 });
 
-// API to like/unlike a post
+// Like/Unlike a post
 app.post('/api/like', (req, res) => {
-    const { postId, liked } = req.body;
+    const { username, postId } = req.body;
 
     const post = posts.find((p) => p.id === postId);
+    const user = users.find((u) => u.username === username);
 
-    if (post) {
-        post.liked = liked;
-        post.likes = liked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1);
+    if (post && user) {
+        if (post.likes.includes(username)) {
+            // Unlike
+            post.likes = post.likes.filter((u) => u !== username);
+        } else {
+            // Like
+            post.likes.push(username);
+        }
 
         fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
-        res.json({ success: true, liked: post.liked, likes: post.likes });
+        res.json({ success: true, likes: post.likes.length });
     } else {
-        res.status(404).json({ success: false, message: 'Post not found' });
+        res.status(404).json({ success: false, message: 'Post or user not found.' });
     }
 });
 
-// API to share a post
-app.post('/api/share', (req, res) => {
-    const { postId } = req.body;
-
-    const post = posts.find((p) => p.id === postId);
-
-    if (post) {
-        post.shares = (post.shares || 0) + 1;
-
-        fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
-        res.json({ success: true, shares: post.shares });
-    } else {
-        res.status(404).json({ success: false, message: 'Post not found' });
-    }
-});
-
-// API to follow/unfollow a user
+// Follow/Unfollow a user
 app.post('/api/follow', (req, res) => {
     const { follower, followee } = req.body;
 
@@ -162,12 +149,12 @@ app.post('/api/follow', (req, res) => {
     }
 });
 
-// API to get my profile details
+// Serve user profile
 app.get('/api/me', (req, res) => {
     const username = req.query.username;
 
     if (!username) {
-        return res.status(400).json({ success: false, message: 'Username is required' });
+        return res.status(400).json({ success: false, message: 'Username is required.' });
     }
 
     const user = users.find((u) => u.username === username);
@@ -180,24 +167,7 @@ app.get('/api/me', (req, res) => {
     }
 });
 
-// Serve user profile page
-app.get('/api/user/:username', (req, res) => {
-    const username = req.params.username;
-    const user = users.find((u) => u.username === username);
-    const userPosts = posts.filter((p) => p.username === username);
-
-    if (user) {
-        res.json({ success: true, user, posts: userPosts });
-    } else {
-        res.status(404).json({ success: false, message: 'User not found.' });
-    }
-});
-
-app.get('/user/:username', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/me.html'));
-});
-
-// API to upload/update profile picture
+// Update profile picture
 app.post('/api/profile-picture', upload.single('file'), (req, res) => {
     const username = req.body.username;
     const user = users.find((u) => u.username === username);
@@ -207,7 +177,7 @@ app.post('/api/profile-picture', upload.single('file'), (req, res) => {
         fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
         res.json({ success: true, profilePicture: user.profilePicture });
     } else {
-        res.status(404).json({ success: false, message: 'User not found' });
+        res.status(404).json({ success: false, message: 'User not found.' });
     }
 });
 
