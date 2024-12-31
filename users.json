@@ -1,7 +1,7 @@
 [
   {
     "username": "Reiker",
-    "password": "Solos",
+    "password": "Ogombo247",
     "followers": 0,
     "following": [],
     "profilePicture": "/uploads/3559f816176255e5a99657ba43701822"
@@ -12,5 +12,19 @@
     "followers": 5000,
     "following": [],
     "profilePicture": "/uploads/4615027cff942cbcfc75e8214f3a6345"
+  },
+  {
+    "username": "Re",
+    "password": "chill",
+    "followers": 0,
+    "following": [],
+    "profilePicture": ""
+  },
+  {
+    "username": "REIKER2fast",
+    "password": "reiker",
+    "followers": 0,
+    "following": [],
+    "profilePicture": ""
   }
 ]

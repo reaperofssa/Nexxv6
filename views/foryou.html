@@ -5,6 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>For You</title>
   <link rel="stylesheet" href="/css/foryou.css">
+  <style>
+    .verified-mark {
+      width: 16px;
+      height: 16px;
+      margin-left: 3px;
+      vertical-align: middle;
+    }
+    .media-container {
+      position: relative;
+    }
+    .media {
+      max-width: 100%;
+      max-height: 80vh;
+      display: block;
+      margin: 0 auto;
+    }
+    .overlay {
+      padding: 10px;
+    }
+    .caption {
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
   <div id="posts-container"></div>
@@ -18,17 +42,23 @@
   </footer>
 
   <script>
-    let currentIndex = 0; // Current post index
+    let currentIndex = 0;
     let posts = [];
-    let isTransitioning = false; // To prevent rapid swipes
+    let isTransitioning = false;
+    let verifiedUsers = [];
 
     async function fetchPosts() {
       try {
         const res = await fetch('/api/posts');
         posts = await res.json();
-        renderPost(currentIndex); // Render the first post
+
+        const verifiedRes = await fetch('/verified.json');
+        const verifiedData = await verifiedRes.json();
+        verifiedUsers = verifiedData.verifiedUsers || [];
+
+        renderPost(currentIndex);
       } catch (error) {
-        console.error('Error fetching posts:', error);
+        console.error('Error fetching posts or verified users:', error);
       }
     }
 
@@ -36,23 +66,38 @@
       if (index < 0 || index >= posts.length) return;
 
       const postsContainer = document.getElementById('posts-container');
-      postsContainer.innerHTML = ''; // Clear container
+      postsContainer.innerHTML = '';
 
       const post = posts[index];
+      const isVerified = verifiedUsers.includes(post.username);
+
       const postElement = document.createElement('div');
       postElement.className = 'post';
 
+      const mediaContent = post.file
+        ? post.file.endsWith('.mp4')
+          ? `<video src="${post.file}" controls class="media"></video>`
+          : `<img src="${post.file}" alt="Post Media" class="media" onerror="this.src='/images/placeholder.png'">`
+        : `<img src="/images/placeholder.png" alt="Placeholder" class="media">`;
+
       postElement.innerHTML = `
         <div class="media-container">
-          ${post.file ? `<img src="${post.file}" alt="Post Media" class="media">` : ''}
+          ${mediaContent}
         </div>
         <div class="overlay">
-          <h3 class="username">${post.username}</h3>
+          <h3 class="username" onclick="navigateTo('/user/${post.username}')">
+            ${post.username}
+            ${isVerified ? `<img src="https://im.ge/i/IMG-9380.zZaAyK" alt="Verified" class="verified-mark" onerror="this.src='/images/verified-placeholder.png'">` : ''}
+          </h3>
           <p class="caption">${post.caption}</p>
           <button class="like-button" onclick="likePost(${index})">
             ${post.liked ? '❤️ Liked' : '🤍 Like'}
           </button>
+          <button class="follow-button" onclick="followUser('${post.username}')">
+            ${post.following ? 'Following' : 'Follow'}
+          </button>
           <span class="like-count">${post.likes || 0} likes</span>
+          <button class="share-button" onclick="sharePost('${post.id}')">🔗 Share</button>
         </div>
       `;
 
@@ -61,25 +106,51 @@
 
     async function likePost(index) {
       const post = posts[index];
-      post.liked = !post.liked; // Toggle like status
-      post.likes = post.liked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1); // Update local like count
+      post.liked = !post.liked;
+      post.likes = post.liked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1);
 
       try {
-        // Update like status on the server
         await fetch('/api/like', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ postId: post.id, liked: post.liked }),
         });
-
-        renderPost(index); // Re-render the current post
+        renderPost(index);
       } catch (error) {
         console.error('Error updating like:', error);
       }
     }
 
+    async function followUser(username) {
+      try {
+        const res = await fetch('/api/follow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username }),
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          alert(result.message || 'Follow status updated!');
+          posts[currentIndex].following = !posts[currentIndex].following;
+          renderPost(currentIndex);
+        }
+      } catch (error) {
+        console.error('Error following user:', error);
+      }
+    }
+
+    function sharePost(postId) {
+      const uniqueLink = `${window.location.origin}/foryou?post=${postId}`;
+      navigator.clipboard.writeText(uniqueLink).then(() => {
+        alert('Post link copied to clipboard!');
+      }).catch(err => {
+        console.error('Failed to copy link:', err);
+      });
+    }
+
     function navigatePost(direction) {
-      if (isTransitioning) return; // Prevent rapid swipes
+      if (isTransitioning) return;
       isTransitioning = true;
 
       const newIndex = currentIndex + direction;
@@ -90,10 +161,9 @@
 
       setTimeout(() => {
         isTransitioning = false;
-      }, 300); // Add a short delay to avoid rapid transitions
+      }, 300);
     }
 
-    // Swipe Gesture Detection
     let startY = 0;
     window.addEventListener('touchstart', (e) => {
       startY = e.touches[0].clientY;
@@ -103,15 +173,15 @@
       const endY = e.changedTouches[0].clientY;
       const distance = startY - endY;
 
-      if (distance > 50) navigatePost(1); // Swipe up
-      else if (distance < -50) navigatePost(-1); // Swipe down
+      if (distance > 50) navigatePost(1);
+      else if (distance < -50) navigatePost(-1);
     });
 
     function navigateTo(route) {
       window.location.href = route;
     }
 
-    fetchPosts(); // Load posts on page load
+    fetchPosts();
   </script>
 </body>
 </html>

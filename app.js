@@ -8,6 +8,7 @@ const app = express();
 const PORT = 3000;
 
 // Middleware
+app.use(express.static(path.join(__dirname)));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static('views'));
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -136,16 +137,64 @@ app.post('/api/share', (req, res) => {
     }
 });
 
-// API to fetch user info
+// API to follow/unfollow a user
+app.post('/api/follow', (req, res) => {
+    const { follower, followee } = req.body;
+
+    const followerUser = users.find((u) => u.username === follower);
+    const followeeUser = users.find((u) => u.username === followee);
+
+    if (followerUser && followeeUser) {
+        if (followerUser.following.includes(followee)) {
+            // Unfollow
+            followerUser.following = followerUser.following.filter((f) => f !== followee);
+            followeeUser.followers = Math.max(0, followeeUser.followers - 1);
+        } else {
+            // Follow
+            followerUser.following.push(followee);
+            followeeUser.followers += 1;
+        }
+
+        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+        res.json({ success: true, followerCount: followeeUser.followers });
+    } else {
+        res.status(404).json({ success: false, message: 'User not found.' });
+    }
+});
+
+// API to get my profile details
+app.get('/api/me', (req, res) => {
+    const username = req.query.username;
+
+    if (!username) {
+        return res.status(400).json({ success: false, message: 'Username is required' });
+    }
+
+    const user = users.find((u) => u.username === username);
+    const userPosts = posts.filter((p) => p.username === username);
+
+    if (user) {
+        res.json({ success: true, user, posts: userPosts });
+    } else {
+        res.status(404).json({ success: false, message: 'User not found.' });
+    }
+});
+
+// Serve user profile page
 app.get('/api/user/:username', (req, res) => {
     const username = req.params.username;
     const user = users.find((u) => u.username === username);
     const userPosts = posts.filter((p) => p.username === username);
+
     if (user) {
-        res.json({ user, posts: userPosts });
+        res.json({ success: true, user, posts: userPosts });
     } else {
-        res.status(404).json({ message: 'User not found.' });
+        res.status(404).json({ success: false, message: 'User not found.' });
     }
+});
+
+app.get('/user/:username', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/me.html'));
 });
 
 // API to upload/update profile picture

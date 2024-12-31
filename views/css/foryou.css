@@ -64,6 +64,7 @@ body {
   font-size: 1.5rem; /* Reduced size */
   font-weight: bold;
   margin: 0 0 5px; /* Added bottom margin */
+  cursor: pointer;
 }
 
 .caption {
@@ -71,6 +72,7 @@ body {
   margin: 0 0 10px; /* Added bottom margin */
 }
 
+/* Like, Follow, and Share Container */
 .like-container {
   position: fixed;
   bottom: 4rem; /* Placed above the footer */
@@ -81,7 +83,9 @@ body {
   z-index: 20;
 }
 
-.like-button {
+.like-button, 
+.follow-button, 
+.share-button {
   background-color: transparent;
   border: 1px solid white;
   color: white;
@@ -90,18 +94,23 @@ body {
   border-radius: 5px;
   cursor: pointer;
   margin-bottom: 0.5rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.like-button:hover {
+.like-button:hover,
+.follow-button:hover,
+.share-button:hover {
   background-color: white;
   color: black;
 }
 
+/* Like Count */
 .like-count {
   font-size: 0.9rem;
   text-align: right;
 }
 
+/* Footer */
 footer {
   background-color: #121212;
   display: flex;
@@ -122,6 +131,7 @@ footer button {
   font-size: 0.9rem;
   border-radius: 5px;
   cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 footer button:hover {

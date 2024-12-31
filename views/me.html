@@ -1,37 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="stylesheet" href="/css/me.css">
+</head>
 <body>
-    <div class="profile-info">
-        <img id="profilePicture" src="" alt="Profile Picture" width="100" height="100">
-        <h1 id="username"></h1>
-        <p id="followers"></p>
-        <p id="following"></p>
+    <div class="profile-container">
+        <div class="profile-info">
+            <img id="profilePicture" src="/default-profile.png" alt="Profile Picture">
+            <div class="profile-text">
+                <h1 id="username">@username</h1>
+                <div class="follow-info">
+                    <p id="followers">0 Followers</p>
+                    <p id="following">0 Following</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <div id="myPosts"></div>
+    <div class="posts-container" id="myPosts"></div>
+    <footer>
+        <nav class="footer-nav">
+            <button onclick="navigateTo('/foryou')">For You</button>
+            <button onclick="navigateTo('/post')">Post</button>
+            <button onclick="navigateTo('/me')">Me</button>
+        </nav>
+    </footer>
+
     <script>
+        function navigateTo(route) {
+            window.location.href = route;
+        }
+
         async function loadProfile() {
-            const username = localStorage.getItem('username');
-            const res = await fetch(`/api/user/${username}`);
-            const data = await res.json();
+            const pathUsername = window.location.pathname.split('/').pop();
+            const username = pathUsername === 'me' 
+                ? localStorage.getItem('username') 
+                : pathUsername;
 
-            if (res.ok) {
-                document.getElementById('username').textContent = `@${data.user.username}`;
-                document.getElementById('followers').textContent = `${data.user.followers} Followers`;
-                document.getElementById('following').textContent = `Following: ${data.user.following?.length || 0}`;
-                if (data.user.profilePicture) {
-                    document.getElementById('profilePicture').src = data.user.profilePicture;
+            const apiUrl = pathUsername === 'me' 
+                ? `/api/me?username=${username}` 
+                : `/api/user/${username}`;
+
+            let isVerified = false;
+
+            try {
+                // Fetch verified users
+                const verifiedRes = await fetch('/verified.json');
+                const verifiedData = await verifiedRes.json();
+                const verifiedUsers = verifiedData.verifiedUsers || [];
+                isVerified = verifiedUsers.includes(username);
+
+                // Fetch user data
+                const res = await fetch(apiUrl);
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    const { user, posts } = data;
+
+                    // Update profile info
+                    const usernameElement = document.getElementById('username');
+                    usernameElement.textContent = `@${user.username}`;
+
+                    if (isVerified) {
+                        const verifiedMark = document.createElement('img');
+                        verifiedMark.src = '/images/verified-placeholder.png';
+                        verifiedMark.alt = 'Verified';
+
+                        // Apply styles to move it down and remove square
+                        verifiedMark.style.width = '16px';
+                        verifiedMark.style.height = '16px';
+                        verifiedMark.style.marginLeft = '6px';
+                        verifiedMark.style.verticalAlign = 'baseline'; // Adjust alignment
+                        verifiedMark.style.position = 'relative'; // Relative positioning
+                        verifiedMark.style.top = '3px'; // Slightly lower
+                        verifiedMark.style.objectFit = 'contain';
+                        verifiedMark.style.background = 'none'; // Remove background
+                        verifiedMark.style.border = 'none';    // Remove border
+                        verifiedMark.style.borderRadius = '0'; // No circular borders
+
+                        usernameElement.appendChild(verifiedMark);
+                    }
+
+                    document.getElementById('followers').textContent = `${user.followers} Followers`;
+                    document.getElementById('following').textContent = `${user.following.length} Following`;
+                    document.getElementById('profilePicture').src = user.profilePicture || '/images/default-profile.png';
+
+                    // Populate posts
+                    document.getElementById('myPosts').innerHTML = posts.map(post => `
+                        <div class="post">
+                            <div class="media-container" onclick="openPost('${post.id}')">
+                                ${post.file.endsWith('.mp4') 
+                                    ? `<video src="${post.file}" class="media"></video>` 
+                                    : `<img src="${post.file}" alt="Post Image" class="media">`}
+                            </div>
+                            <p>${post.caption}</p>
+                            <div class="post-stats">
+                                <span>❤️ ${post.likes}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    alert('Error: User not found.');
                 }
-
-                const myPosts = document.getElementById('myPosts');
-                myPosts.innerHTML = data.posts.map(post => `
-                    <div class="post">
-                        <p>${post.caption}</p>
-                        ${post.file ? `<img src="${post.file}" alt="Post Image">` : ''}
-                    </div>
-                `).join('');
-            } else {
-                alert('Error loading profile.');
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                alert('An error occurred while loading the profile.');
             }
         }
 
+        function openPost(postId) {
+            const postUrl = `/foryou?post=${postId}`;
+            window.location.href = postUrl;
+        }
+
+        // Load profile on page load
         loadProfile();
     </script>
 </body>
+</html>

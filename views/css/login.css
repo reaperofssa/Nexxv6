@@ -1,74 +1,151 @@
+/* General Styles */
 body {
-    background-color: #0b2545; /* Dark blue background */
-    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #000, #1a1a1a, #333); /* Gradient with black tones */
+    font-family: 'Arial', sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     margin: 0;
+    color: #fff; /* Text color */
+    overflow: hidden; /* Prevent scroll on smaller screens */
 }
 
+/* Animated Background */
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.7), rgba(26, 26, 26, 0.9));
+    z-index: -1;
+}
+
+/* Form Container */
 form#authForm {
-    background-color: #0b2596; /* Light blue background */
-    width: 300px;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background: #1a1a1a; /* Sleek black background */
+    width: 360px;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
     text-align: center;
     position: relative;
+    animation: fadeIn 1s ease-in-out; /* Smooth fade-in animation */
 }
 
+/* Form Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Title */
+form#authForm::before {
+    content: "Welcome";
+    font-size: 18px; /* Smaller title */
+    font-weight: bold;
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    background: #000; /* Black background */
+    padding: 5px 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    text-transform: uppercase; /* Modern look */
+}
+
+/* Input Fields */
 form#authForm input[type="text"],
 form#authForm input[type="password"] {
     width: calc(100% - 20px);
     margin: 10px 0;
-    padding: 8px;
-    border: 1px solid #fff;
-    border-radius: 5px;
-    background-color: #0b4261;
+    padding: 12px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background-color: #333;
     color: #fff;
-    font-size: 14px;
+    font-size: 16px;
+    transition: 0.3s ease;
 }
 
+form#authForm input[type="text"]:focus,
+form#authForm input[type="password"]:focus {
+    background-color: #444;
+    outline: none;
+    border-color: #4a90e2; /* Bright accent color */
+    box-shadow: 0 0 6px #4a90e2;
+}
+
+/* File Input */
 form#authForm input[type="file"] {
     margin: 15px 0;
-    padding: 8px;
-    width: 100%;
-    background-color: #2a6fa9;
-    color: #fff;
+    padding: 10px 12px;
+    width: auto;
+    max-width: 100%;
+    background-color: #444;
+    color: #ccc; /* Subtle text */
     font-size: 14px;
+    border: 1px solid #333;
+    border-radius: 8px;
     cursor: pointer;
+    transition: 0.3s ease;
     text-align: center;
-    border: none;
 }
 
+form#authForm input[type="file"]:hover {
+    background-color: #555;
+    transform: scale(1.03); /* Slight hover effect */
+}
+
+/* Submit Button */
 form#authForm button {
-    background-color: #fff;
-    color: #2a6fa9;
-    font-size: 16px;
+    background: #4a90e2; /* Vibrant blue for contrast */
+    color: #fff;
+    font-size: 18px;
     font-weight: bold;
-    padding: 10px;
+    padding: 14px;
     width: 100%;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    margin-top: 10px;
+    margin-top: 15px;
+    transition: all 0.3s ease;
 }
 
 form#authForm button:hover {
-    background-color: #e0e0e0;
+    background: #357ABD; /* Darker blue on hover */
+    box-shadow: 0 4px 10px rgba(74, 144, 226, 0.5); /* Glowing hover effect */
 }
 
-form#authForm::before {
-    content: "LOGIN / SIGN UP";
-    font-size: 18px;
-    font-weight: bold;
-    position: absolute;
-    top: -25px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #2a6fa9;
-    padding: 5px 10px;
-    color: #fff;
-    border-radius: 5px;
+form#authForm button:active {
+    transform: scale(0.98); /* Pressed button effect */
+}
+
+/* Subtle Text Animations */
+form#authForm p {
+    font-size: 14px;
+    margin-top: 10px;
+    color: #ccc;
+    animation: slideIn 1s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

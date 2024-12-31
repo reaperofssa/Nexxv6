@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        img {
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        ul li {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img id="profilePicture" alt="Profile Picture" />
+        <h1 id="username"></h1>
+    </header>
+    <section>
+        <p id="followers"></p>
+        <p id="following"></p>
+    </section>
+    <section>
+        <h2>Posts</h2>
+        <ul id="posts"></ul>
+    </section>
+
+    <script>
+        // Get the username from the URL
+        const username = window.location.pathname.split('/').pop();
+
+        // Fetch user data from the API
+        fetch(`/api/user/${username}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const { user, posts } = data;
+
+                    // Populate user details
+                    document.getElementById('username').textContent = user.username;
+                    document.getElementById('profilePicture').src = user.profilePicture || '/default-profile.png';
+                    document.getElementById('followers').textContent = `Followers: ${user.followers}`;
+                    document.getElementById('following').textContent = `Following: ${user.following.length}`;
+
+                    // Populate posts
+                    const postsList = document.getElementById('posts');
+                    posts.forEach(post => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <h3>${post.caption}</h3>
+                            ${post.file ? `<img src="${post.file}" alt="${post.caption}" style="max-width: 300px;" />` : ''}
+                            <p><strong>Likes:</strong> ${post.likes} | <strong>Shares:</strong> ${post.shares}</p>
+                        `;
+                        postsList.appendChild(listItem);
+                    });
+                } else {
+                    document.body.innerHTML = '<h1>User not found</h1>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching user data:', error);
+                document.body.innerHTML = '<h1>Failed to load user data</h1>';
+            });
+    </script>
+</body>
+</html>
