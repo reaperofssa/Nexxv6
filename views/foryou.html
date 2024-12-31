@@ -28,6 +28,10 @@
       font-size: 14px;
       color: #333;
     }
+    .follow-button.following {
+      background-color: #00b894;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -93,7 +97,7 @@
           <button class="like-button" onclick="likePost(${index})">
             ${post.liked ? '❤️ Liked' : '🤍 Like'}
           </button>
-          <button class="follow-button" onclick="followUser('${post.username}')">
+          <button class="follow-button ${post.following ? 'following' : ''}" onclick="followUser(${index}, '${post.username}')">
             ${post.following ? 'Following' : 'Follow'}
           </button>
           <span class="like-count">${post.likes || 0} likes</span>
@@ -121,19 +125,17 @@
       }
     }
 
-    async function followUser(username) {
+    async function followUser(index, username) {
       try {
         const res = await fetch('/api/follow', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username }),
+          body: JSON.stringify({ follower: 'loggedInUser', followee: username }), // Replace 'loggedInUser' with actual logged-in username
         });
 
         if (res.ok) {
-          const result = await res.json();
-          alert(result.message || 'Follow status updated!');
-          posts[currentIndex].following = !posts[currentIndex].following;
-          renderPost(currentIndex);
+          posts[index].following = !posts[index].following;
+          renderPost(index);
         }
       } catch (error) {
         console.error('Error following user:', error);
