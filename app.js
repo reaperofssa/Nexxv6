@@ -7,9 +7,6 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
-// Set up the app
-const app = express();
-
 // Middleware for serving static files
 app.use(express.static(path.join(__dirname)));
 app.use(express.static(path.join(__dirname, 'public')));
