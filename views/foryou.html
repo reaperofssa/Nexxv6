@@ -122,7 +122,7 @@ function renderPost(index) {
             ${post.username}
             ${isVerified ? `<img src="/images/verified-placeholder.png" alt="Verified" class="verified-mark" onerror="this.src='/images/verified-placeholder.png'">` : ''}
           </h3>
-          <p class="caption">${post.caption}</p>
+          <p class="caption" style="color: lightblue;">${post.caption}</p>
           <button class="like-button" onclick="likePost(${index})">
             ${post.liked ? '❤️ Liked' : '🤍 Like'}
           </button>
