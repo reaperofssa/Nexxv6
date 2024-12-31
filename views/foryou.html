@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>For You</title>
-  <link rel="stylesheet" href="/css/foryou.css">
   <style>
     .verified-mark {
       width: 16px;
@@ -44,22 +43,15 @@
   <script>
     let currentIndex = 0;
     let posts = [];
-    let isTransitioning = false;
-    let verifiedUsers = [];
     const currentUser = 'REIKER'; // Simulating the logged-in user
 
     async function fetchPosts() {
       try {
         const res = await fetch('/api/posts');
         posts = await res.json();
-
-        const verifiedRes = await fetch('/verified.json');
-        const verifiedData = await verifiedRes.json();
-        verifiedUsers = verifiedData.verifiedUsers || [];
-
         renderPost(currentIndex);
       } catch (error) {
-        console.error('Error fetching posts or verified users:', error);
+        console.error('Error fetching posts:', error);
       }
     }
 
@@ -70,7 +62,6 @@
       postsContainer.innerHTML = '';
 
       const post = posts[index];
-      const isVerified = verifiedUsers.includes(post.username);
       const isLiked = post.likedBy?.includes(currentUser);
 
       const postElement = document.createElement('div');
@@ -87,16 +78,12 @@
           ${mediaContent}
         </div>
         <div class="overlay">
-          <h3 class="username" onclick="navigateTo('/user/${post.username}')">
+          <h3 class="username">
             ${post.username}
-            ${isVerified ? `<img src="https://im.ge/i/IMG-9380.zZaAyK" alt="Verified" class="verified-mark" onerror="this.src='/images/verified-placeholder.png'">` : ''}
           </h3>
           <p class="caption">${post.caption}</p>
           <button class="like-button" onclick="likePost(${index})">
             ${isLiked ? '❤️ Liked' : '🤍 Like'}
-          </button>
-          <button class="follow-button" onclick="followUser('${post.username}')">
-            ${post.following ? 'Following' : 'Follow'}
           </button>
           <span class="like-count">${post.likedBy?.length || 0} likes</span>
           <button class="share-button" onclick="sharePost('${post.id}')">🔗 Share</button>
@@ -111,11 +98,9 @@
       const likedBy = post.likedBy || [];
 
       if (likedBy.includes(currentUser)) {
-        // Unlike the post
-        post.likedBy = likedBy.filter(user => user !== currentUser);
+        post.likedBy = likedBy.filter((user) => user !== currentUser); // Unlike
       } else {
-        // Like the post
-        post.likedBy.push(currentUser);
+        post.likedBy.push(currentUser); // Like
       }
 
       try {
@@ -130,61 +115,14 @@
       }
     }
 
-    async function followUser(username) {
-      try {
-        const res = await fetch('/api/follow', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username }),
-        });
-
-        if (res.ok) {
-          const result = await res.json();
-          alert(result.message || 'Follow status updated!');
-          posts[currentIndex].following = !posts[currentIndex].following;
-          renderPost(currentIndex);
-        }
-      } catch (error) {
-        console.error('Error following user:', error);
-      }
-    }
-
     function sharePost(postId) {
       const uniqueLink = `${window.location.origin}/foryou?post=${postId}`;
       navigator.clipboard.writeText(uniqueLink).then(() => {
         alert('Post link copied to clipboard!');
-      }).catch(err => {
+      }).catch((err) => {
         console.error('Failed to copy link:', err);
       });
     }
-
-    function navigatePost(direction) {
-      if (isTransitioning) return;
-      isTransitioning = true;
-
-      const newIndex = currentIndex + direction;
-      if (newIndex >= 0 && newIndex < posts.length) {
-        currentIndex = newIndex;
-        renderPost(currentIndex);
-      }
-
-      setTimeout(() => {
-        isTransitioning = false;
-      }, 300);
-    }
-
-    let startY = 0;
-    window.addEventListener('touchstart', (e) => {
-      startY = e.touches[0].clientY;
-    });
-
-    window.addEventListener('touchend', (e) => {
-      const endY = e.changedTouches[0].clientY;
-      const distance = startY - endY;
-
-      if (distance > 50) navigatePost(1);
-      else if (distance < -50) navigatePost(-1);
-    });
 
     function navigateTo(route) {
       window.location.href = route;
