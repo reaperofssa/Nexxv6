@@ -46,29 +46,19 @@
     let posts = [];
     let isTransitioning = false;
     let verifiedUsers = [];
-    const loggedInUsername = new URLSearchParams(window.location.search).get('username');
-
-    if (!loggedInUsername) {
-      alert('Please log in first.');
-      window.location.href = '/login';
-    }
 
     async function fetchPosts() {
       try {
-        const postsRes = await fetch('/api/posts');
-        posts = await postsRes.json();
+        const res = await fetch('/api/posts');
+        posts = await res.json();
 
-        try {
-          const verifiedRes = await fetch('/verified.json');
-          const verifiedData = await verifiedRes.json();
-          verifiedUsers = verifiedData.verifiedUsers || [];
-        } catch {
-          console.warn('Could not fetch verified users.');
-        }
+        const verifiedRes = await fetch('/verified.json');
+        const verifiedData = await verifiedRes.json();
+        verifiedUsers = verifiedData.verifiedUsers || [];
 
         renderPost(currentIndex);
       } catch (error) {
-        console.error('Error fetching posts:', error);
+        console.error('Error fetching posts or verified users:', error);
       }
     }
 
@@ -101,12 +91,12 @@
           </h3>
           <p class="caption">${post.caption}</p>
           <button class="like-button" onclick="likePost(${index})">
-            ${post.likes && post.likes.includes(loggedInUsername) ? '❤️ Liked' : '🤍 Like'}
+            ${post.liked ? '❤️ Liked' : '🤍 Like'}
           </button>
           <button class="follow-button" onclick="followUser('${post.username}')">
-            ${post.followers && post.followers.includes(loggedInUsername) ? 'Following' : 'Follow'}
+            ${post.following ? 'Following' : 'Follow'}
           </button>
-          <span class="like-count">${post.likes ? post.likes.length : 0} likes</span>
+          <span class="like-count">${post.likes || 0} likes</span>
           <button class="share-button" onclick="sharePost('${post.id}')">🔗 Share</button>
         </div>
       `;
@@ -116,21 +106,15 @@
 
     async function likePost(index) {
       const post = posts[index];
-      const isLiked = post.likes && post.likes.includes(loggedInUsername);
+      post.liked = !post.liked;
+      post.likes = post.liked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1);
 
       try {
         await fetch('/api/like', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ postId: post.id, username: loggedInUsername }),
+          body: JSON.stringify({ postId: post.id, liked: post.liked }),
         });
-
-        if (isLiked) {
-          post.likes = post.likes.filter((user) => user !== loggedInUsername);
-        } else {
-          post.likes.push(loggedInUsername);
-        }
-
         renderPost(index);
       } catch (error) {
         console.error('Error updating like:', error);
@@ -142,21 +126,13 @@
         const res = await fetch('/api/follow', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ follower: loggedInUsername, followee: username }),
+          body: JSON.stringify({ username }),
         });
 
         if (res.ok) {
           const result = await res.json();
           alert(result.message || 'Follow status updated!');
-          const post = posts[currentIndex];
-          post.followers = post.followers || [];
-
-          if (post.followers.includes(loggedInUsername)) {
-            post.followers = post.followers.filter((user) => user !== loggedInUsername);
-          } else {
-            post.followers.push(loggedInUsername);
-          }
-
+          posts[currentIndex].following = !posts[currentIndex].following;
           renderPost(currentIndex);
         }
       } catch (error) {
@@ -168,7 +144,7 @@
       const uniqueLink = `${window.location.origin}/foryou?post=${postId}`;
       navigator.clipboard.writeText(uniqueLink).then(() => {
         alert('Post link copied to clipboard!');
-      }).catch((err) => {
+      }).catch(err => {
         console.error('Failed to copy link:', err);
       });
     }
