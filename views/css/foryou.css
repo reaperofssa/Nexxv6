@@ -70,6 +70,7 @@ body {
 .caption {
   font-size: 1rem; /* Reduced size */
   margin: 0 0 10px; /* Added bottom margin */
+  color: #ADD8E6; /* Light blue color */
 }
 
 /* Like, Follow, and Share Container */
