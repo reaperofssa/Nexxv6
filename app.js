@@ -106,16 +106,22 @@ app.get('/api/posts', (req, res) => {
 
 // API to like/unlike a post
 app.post('/api/like', (req, res) => {
-    const { postId, liked } = req.body;
+    const { postId, liked, username } = req.body;
 
     const post = posts.find((p) => p.id === postId);
 
     if (post) {
-        post.liked = liked;
-        post.likes = liked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1);
+        // Initialize `userLikes` if not already present
+        post.userLikes = post.userLikes || {};
+
+        // Update the user's like status
+        post.userLikes[username] = liked;
+
+        // Recalculate the total likes
+        post.likes = Object.values(post.userLikes).filter(Boolean).length;
 
         fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
-        res.json({ success: true, liked: post.liked, likes: post.likes });
+        res.json({ success: true, liked: post.userLikes[username], likes: post.likes });
     } else {
         res.status(404).json({ success: false, message: 'Post not found' });
     }
