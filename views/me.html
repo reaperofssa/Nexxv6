@@ -34,65 +34,42 @@
         }
 
         async function loadProfile() {
-            const pathUsername = window.location.pathname.split('/').pop();
-            const username = pathUsername === 'me' 
-                ? localStorage.getItem('username') 
-                : pathUsername;
+            const username = localStorage.getItem('username'); // Fetch username from local storage
 
-            const apiUrl = pathUsername === 'me' 
-                ? `/api/me?username=${username}` 
-                : `/api/user/${username}`;
-
-            let isVerified = false;
+            if (!username) {
+                alert('No user is logged in.');
+                return;
+            }
 
             try {
-                // Fetch verified users
-                const verifiedRes = await fetch('/verified.json');
-                const verifiedData = await verifiedRes.json();
-                const verifiedUsers = verifiedData.verifiedUsers || [];
-                isVerified = verifiedUsers.includes(username);
+                // Fetch profile data
+                const res = await fetch('/api/me', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-username': username, // Send username in header
+                    },
+                });
 
-                // Fetch user data
-                const res = await fetch(apiUrl);
                 const data = await res.json();
 
                 if (res.ok && data.success) {
                     const { user, posts } = data;
 
-                    // Update profile info
+                    // Update profile details
                     const usernameElement = document.getElementById('username');
                     usernameElement.textContent = `@${user.username}`;
-
-                    if (isVerified) {
-                        const verifiedMark = document.createElement('img');
-                        verifiedMark.src = '/images/verified-placeholder.png';
-                        verifiedMark.alt = 'Verified';
-
-                        // Apply styles to move it down and remove square
-                        verifiedMark.style.width = '16px';
-                        verifiedMark.style.height = '16px';
-                        verifiedMark.style.marginLeft = '6px';
-                        verifiedMark.style.verticalAlign = 'baseline'; // Adjust alignment
-                        verifiedMark.style.position = 'relative'; // Relative positioning
-                        verifiedMark.style.top = '3px'; // Slightly lower
-                        verifiedMark.style.objectFit = 'contain';
-                        verifiedMark.style.background = 'none'; // Remove background
-                        verifiedMark.style.border = 'none';    // Remove border
-                        verifiedMark.style.borderRadius = '0'; // No circular borders
-
-                        usernameElement.appendChild(verifiedMark);
-                    }
 
                     document.getElementById('followers').textContent = `${user.followers} Followers`;
                     document.getElementById('following').textContent = `${user.following.length} Following`;
                     document.getElementById('profilePicture').src = user.profilePicture || '/images/default-profile.png';
 
-                    // Populate posts
+                    // Display user posts
                     document.getElementById('myPosts').innerHTML = posts.map(post => `
                         <div class="post">
                             <div class="media-container" onclick="openPost('${post.id}')">
                                 ${post.file.endsWith('.mp4') 
-                                    ? `<video src="${post.file}" class="media"></video>` 
+                                    ? `<video src="${post.file}" controls class="media"></video>` 
                                     : `<img src="${post.file}" alt="Post Image" class="media">`}
                             </div>
                             <p>${post.caption}</p>
@@ -102,7 +79,7 @@
                         </div>
                     `).join('');
                 } else {
-                    alert('Error: User not found.');
+                    alert('Error: ' + data.message);
                 }
             } catch (error) {
                 console.error('Error loading profile:', error);
