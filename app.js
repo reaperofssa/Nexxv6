@@ -182,15 +182,36 @@ app.post('/api/like', (req, res) => {
 
 // API to share a post
 app.post('/api/share', (req, res) => {
-    const { postId } = req.body;
+    const { postId, sharedBy } = req.body; // Add `sharedBy` to track who shared it
 
     const post = posts.find((p) => p.id === postId);
 
     if (post) {
         post.shares = (post.shares || 0) + 1;
 
+        // Create a shared post entry
+        const sharedPost = {
+            id: `${postId}-shared-${Date.now()}`, // Unique ID for the shared post
+            originalPostId: postId, // Link to the original post
+            sharedBy: sharedBy || "anonymous", // Track who shared it
+            file: post.file, // Use the same media file
+            caption: post.caption, // Original caption
+            likes: 0, // Start with 0 likes for the shared version
+            shares: 0, // No shares initially for the shared version
+            isShared: true, // Flag as a shared post
+            timestamp: Date.now(), // Timestamp for sorting
+        };
+
+        // Add the shared post to the list of posts
+        posts.unshift(sharedPost);
+
         fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
-        res.json({ success: true, shares: post.shares });
+
+        res.json({
+            success: true,
+            message: 'Post shared successfully',
+            sharedPost,
+        });
     } else {
         res.status(404).json({ success: false, message: 'Post not found' });
     }
