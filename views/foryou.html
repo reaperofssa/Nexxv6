@@ -171,23 +171,40 @@ async function likePost(index) {
     }
 }
 
-// Function to follow a user
-async function followUser(username) {
+// Function to follow/unfollow a user
+async function followUser(followeeUsername) {
+    const currentUsername = localStorage.getItem('username'); // Get the logged-in username from localStorage
+
+    if (!currentUsername) {
+        alert('You need to log in to follow users.');
+        return;
+    }
+
     try {
         const res = await fetch('/api/follow', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username }),
+            headers: {
+                'Content-Type': 'application/json',
+                'current-username': currentUsername, // Pass current username in headers
+            },
+            body: JSON.stringify({ followee: followeeUsername }), // Send followee username in the body
         });
 
+        const data = await res.json();
+
         if (res.ok) {
-            const result = await res.json();
-            alert(result.message || 'Follow status updated!');
+            // Update the follow status in the current post
             posts[currentIndex].following = !posts[currentIndex].following;
-            renderPost(currentIndex);
+
+            alert(data.message || `${posts[currentIndex].following ? 'Followed' : 'Unfollowed'} ${followeeUsername}!`);
+            renderPost(currentIndex); // Re-render the post to update UI
+        } else {
+            console.error('Error updating follow status:', data.message);
+            alert(data.message || 'Failed to update follow status.');
         }
     } catch (error) {
         console.error('Error following user:', error);
+        alert('An error occurred. Please try again.');
     }
 }
 
