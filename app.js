@@ -79,6 +79,10 @@ app.get('/search', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/home.html'));
 });
 
+app.get('/followerslist/:username', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/followerslist.html'));
+});
+
 // API to sign up/login
 app.post('/api/auth', (req, res) => {
     const { username, password } = req.body;
