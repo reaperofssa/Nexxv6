@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Followers List</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #followers-container {
+            margin-top: 20px;
+        }
+
+        .follower {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ccc;
+            cursor: pointer;
+        }
+
+        .follower img {
+            width: 16px;
+            height: 16px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        .no-followers {
+            font-style: italic;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+    <h1>Followers List for <span id="username"></span></h1>
+    <div id="followers-container"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const pathUsername = window.location.pathname.split('/').pop();
+            const usernameElement = document.getElementById('username');
+            const followersContainer = document.getElementById('followers-container');
+
+            // Display the username
+            usernameElement.textContent = pathUsername;
+
+            try {
+                // Fetch the followers of the user
+                const response = await fetch(`/api/followers/${pathUsername}`);
+                const data = await response.json();
+
+                // Fetch verified users
+                const verifiedRes = await fetch('/verified.json');
+                const verifiedData = await verifiedRes.json();
+                const verifiedUsers = verifiedData.verifiedUsers || [];
+
+                if (response.ok && data.followersCount > 0) {
+                    followersContainer.innerHTML = data.followers
+                        .map(follower => {
+                            const isVerified = verifiedUsers.includes(follower);
+                            return `
+                                <div class="follower" onclick="openUserProfile('${follower}')">
+                                    <span>${follower}</span>
+                                    ${
+                                        isVerified
+                                            ? `<img src="/images/verified-placeholder.png" alt="Verified" class="verified-icon">`
+                                            : ''
+                                    }
+                                </div>`;
+                        })
+                        .join('');
+                } else {
+                    followersContainer.innerHTML = `<p class="no-followers">You have no followers.</p>`;
+                }
+            } catch (error) {
+                console.error('Error fetching followers:', error);
+                followersContainer.innerHTML = `<p class="no-followers">An error occurred while loading followers.</p>`;
+            }
+        });
+
+        // Navigate to the user profile page
+        function openUserProfile(username) {
+            window.location.href = `/user/${username}`;
+        }
+    </script>
+</body>
+</html>
