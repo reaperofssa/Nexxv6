@@ -29,7 +29,6 @@
         .follower {
             display: flex;
             align-items: center;
-            justify-content: space-between;
             padding: 15px 20px;
             background-color: #1e1e1e;
             margin-bottom: 10px;
@@ -43,11 +42,15 @@
             background-color: #333333;
         }
 
+        .follower span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .follower img {
             width: 18px;
             height: 18px;
-            margin-left: 8px;
-            vertical-align: middle;
         }
 
         .no-followers {
@@ -60,9 +63,8 @@
         footer {
             background-color: #121212;
             display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            padding: 0.5rem 0;
+            justify-content: space-around;
+            padding: 0.7rem 0;
             border-top: 1px solid #444;
             position: fixed;
             bottom: 0;
@@ -73,16 +75,17 @@
             background-color: transparent;
             border: 1px solid white;
             color: white;
-            padding: 0.6rem 1rem;
+            padding: 0.8rem 1.2rem;
             font-size: 0.9rem;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
         footer button:hover {
             background-color: white;
             color: black;
+            transform: scale(1.05);
         }
 
         /* Responsive Design */
@@ -95,6 +98,7 @@
             footer {
                 flex-direction: column;
                 gap: 1rem;
+                align-items: center;
             }
 
             footer button {
@@ -141,12 +145,11 @@
                             const isVerified = verifiedUsers.includes(follower);
                             return `
                                 <div class="follower" onclick="openUserProfile('${follower}')">
-                                    <span>${follower}</span>
-                                    ${
+                                    <span>${follower} ${
                                         isVerified
                                             ? `<img src="/images/verified-placeholder.png" alt="Verified" class="verified-icon">`
                                             : ''
-                                    }
+                                    }</span>
                                 </div>`;
                         })
                         .join('');
