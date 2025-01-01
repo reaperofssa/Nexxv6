@@ -30,10 +30,10 @@
 
     <script>
         function navigateTo(route) {
-            window.location.href = route;
-        }
+    window.location.href = route;
+}
 
-        async function loadProfile() {
+async function loadProfile() {
     const pathUsername = window.location.pathname.split('/').pop();
     const username = pathUsername === 'me' 
         ? localStorage.getItem('username') 
@@ -75,15 +75,18 @@
 
                 // Verified badge styles
                 verifiedMark.style.width = '16px';
-                verifiedMark.style.height = '16px';
-                verifiedMark.style.marginLeft = '6px';
-                verifiedMark.style.verticalAlign = 'baseline';
-                verifiedMark.style.position = 'relative';
-                verifiedMark.style.top = '3px';
-                verifiedMark.style.objectFit = 'contain';
+                        verifiedMark.style.height = '16px';
+                        verifiedMark.style.marginLeft = '6px';
+                        verifiedMark.style.verticalAlign = 'baseline'; // Adjust alignment
+                        verifiedMark.style.position = 'relative'; // Relative positioning
+                        verifiedMark.style.top = '3px'; // Slightly lower
+                        verifiedMark.style.objectFit = 'contain';
+                        verifiedMark.style.background = 'none'; // Remove background
+                        verifiedMark.style.border = 'none';    // Remove border
+                        verifiedMark.style.borderRadius = '0'; // No circular borders
 
-                usernameElement.appendChild(verifiedMark);
-            }
+                        usernameElement.appendChild(verifiedMark);
+                    }
 
             document.getElementById('profilePicture').src = user.profilePicture || '/images/default-profile.png';
 
@@ -93,9 +96,6 @@
 
             if (followersRes.ok) {
                 document.getElementById('followers').textContent = `${followersData.followersCount} Followers`;
-                document.getElementById('followersList').innerHTML = followersData.followers
-                    .map(follower => `<span class="follower">@${follower}</span>`)
-                    .join(', ');
             } else {
                 console.warn('Failed to load followers:', followersData.message);
             }
@@ -103,19 +103,24 @@
             document.getElementById('following').textContent = `${user.following.length} Following`;
 
             // Populate posts
-            document.getElementById('myPosts').innerHTML = posts.map(post => `
-                <div class="post">
-                    <div class="media-container" onclick="openPost('${post.id}')">
-                        ${post.file.endsWith('.mp4') 
-                            ? `<video src="${post.file}" class="media"></video>` 
-                            : `<img src="${post.file}" alt="Post Image" class="media">`}
+            const postsContainer = document.getElementById('myPosts');
+            if (posts && posts.length > 0) {
+                postsContainer.innerHTML = posts.map(post => `
+                    <div class="post">
+                        <div class="media-container" onclick="openPost('${post.id}')">
+                            ${post.file.endsWith('.mp4') 
+                                ? `<video src="${post.file}" class="media" autoplay loop muted></video>` 
+                                : `<img src="${post.file}" alt="Post Image" class="media">`}
+                        </div>
+                        <p>${post.caption || ''}</p>
+                        <div class="post-stats">
+                            <span>❤️ ${post.likes}</span>
+                        </div>
                     </div>
-                    <p>${post.caption}</p>
-                    <div class="post-stats">
-                        <span>❤️ ${post.likes}</span>
-                    </div>
-                </div>
-            `).join('');
+                `).join('');
+            } else {
+                postsContainer.innerHTML = `<p>No posts available.</p>`;
+            }
         } else {
             alert('Error: User not found.');
         }
@@ -125,13 +130,13 @@
     }
 }
 
-        function openPost(postId) {
-            const postUrl = `/foryou?post=${postId}`;
-            window.location.href = postUrl;
-        }
+function openPost(postId) {
+    const postUrl = `/foryou?post=${postId}`;
+    window.location.href = postUrl;
+}
 
-        // Load profile on page load
-        loadProfile();
+// Load profile on page load
+loadProfile();
     </script>
 </body>
 </html>
