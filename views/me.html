@@ -100,13 +100,11 @@ async function loadProfile() {
                 console.warn('Failed to load followers:', followersData.message);
             }
 
+            // Add event listener for the following button
             const followingButton = document.getElementById('following');
-const usernameElement = document.getElementById('username');
-
-followingButton.addEventListener('click', () => {
-    const username = usernameElement.textContent.replace('@', '');
-    window.location.href = `/followerslist?user=${username}`;
-});
+            followingButton.addEventListener('click', () => {
+                window.location.href = `/followerslist/${user.username}`;
+            });
 
             // Populate posts
             const postsContainer = document.getElementById('myPosts');
