@@ -34,81 +34,96 @@
         }
 
         async function loadProfile() {
-            const pathUsername = window.location.pathname.split('/').pop();
-            const username = pathUsername === 'me' 
-                ? localStorage.getItem('username') 
-                : pathUsername;
+    const pathUsername = window.location.pathname.split('/').pop();
+    const username = pathUsername === 'me' 
+        ? localStorage.getItem('username') 
+        : pathUsername;
 
-            const apiUrl = pathUsername === 'me' 
-                ? `/api/me?username=${username}` 
-                : `/api/user/${username}`;
+    if (!username) {
+        alert('No username found. Please log in.');
+        return;
+    }
 
-            let isVerified = false;
+    const apiUrl = pathUsername === 'me' 
+        ? `/api/me?username=${username}` 
+        : `/api/user/${username}`;
 
-            try {
-                // Fetch verified users
-                const verifiedRes = await fetch('/verified.json');
-                const verifiedData = await verifiedRes.json();
-                const verifiedUsers = verifiedData.verifiedUsers || [];
-                isVerified = verifiedUsers.includes(username);
+    let isVerified = false;
 
-                // Fetch user data
-                const res = await fetch(apiUrl);
-                const data = await res.json();
+    try {
+        // Fetch verified users
+        const verifiedRes = await fetch('/verified.json');
+        const verifiedData = await verifiedRes.json();
+        const verifiedUsers = verifiedData.verifiedUsers || [];
+        isVerified = verifiedUsers.includes(username);
 
-                if (res.ok && data.success) {
-                    const { user, posts } = data;
+        // Fetch user data
+        const res = await fetch(apiUrl);
+        const data = await res.json();
 
-                    // Update profile info
-                    const usernameElement = document.getElementById('username');
-                    usernameElement.textContent = `@${user.username}`;
+        if (res.ok && data.success) {
+            const { user, posts } = data;
 
-                    if (isVerified) {
-                        const verifiedMark = document.createElement('img');
-                        verifiedMark.src = '/images/verified-placeholder.png';
-                        verifiedMark.alt = 'Verified';
+            // Update profile info
+            const usernameElement = document.getElementById('username');
+            usernameElement.textContent = `@${user.username}`;
 
-                        // Apply styles to move it down and remove square
-                        verifiedMark.style.width = '16px';
-                        verifiedMark.style.height = '16px';
-                        verifiedMark.style.marginLeft = '6px';
-                        verifiedMark.style.verticalAlign = 'baseline'; // Adjust alignment
-                        verifiedMark.style.position = 'relative'; // Relative positioning
-                        verifiedMark.style.top = '3px'; // Slightly lower
-                        verifiedMark.style.objectFit = 'contain';
-                        verifiedMark.style.background = 'none'; // Remove background
-                        verifiedMark.style.border = 'none';    // Remove border
-                        verifiedMark.style.borderRadius = '0'; // No circular borders
+            if (isVerified) {
+                const verifiedMark = document.createElement('img');
+                verifiedMark.src = '/images/verified-placeholder.png';
+                verifiedMark.alt = 'Verified';
 
-                        usernameElement.appendChild(verifiedMark);
-                    }
+                // Verified badge styles
+                verifiedMark.style.width = '16px';
+                verifiedMark.style.height = '16px';
+                verifiedMark.style.marginLeft = '6px';
+                verifiedMark.style.verticalAlign = 'baseline';
+                verifiedMark.style.position = 'relative';
+                verifiedMark.style.top = '3px';
+                verifiedMark.style.objectFit = 'contain';
 
-                    document.getElementById('followers').textContent = `${user.followers} Followers`;
-                    document.getElementById('following').textContent = `${user.following.length} Following`;
-                    document.getElementById('profilePicture').src = user.profilePicture || '/images/default-profile.png';
-
-                    // Populate posts
-                    document.getElementById('myPosts').innerHTML = posts.map(post => `
-                        <div class="post">
-                            <div class="media-container" onclick="openPost('${post.id}')">
-                                ${post.file.endsWith('.mp4') 
-                                    ? `<video src="${post.file}" class="media"></video>` 
-                                    : `<img src="${post.file}" alt="Post Image" class="media">`}
-                            </div>
-                            <p>${post.caption}</p>
-                            <div class="post-stats">
-                                <span>❤️ ${post.likes}</span>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    alert('Error: User not found.');
-                }
-            } catch (error) {
-                console.error('Error loading profile:', error);
-                alert('An error occurred while loading the profile.');
+                usernameElement.appendChild(verifiedMark);
             }
+
+            document.getElementById('profilePicture').src = user.profilePicture || '/images/default-profile.png';
+
+            // Fetch followers data
+            const followersRes = await fetch(`/api/followers/${user.username}`);
+            const followersData = await followersRes.json();
+
+            if (followersRes.ok) {
+                document.getElementById('followers').textContent = `${followersData.followersCount} Followers`;
+                document.getElementById('followersList').innerHTML = followersData.followers
+                    .map(follower => `<span class="follower">@${follower}</span>`)
+                    .join(', ');
+            } else {
+                console.warn('Failed to load followers:', followersData.message);
+            }
+
+            document.getElementById('following').textContent = `${user.following.length} Following`;
+
+            // Populate posts
+            document.getElementById('myPosts').innerHTML = posts.map(post => `
+                <div class="post">
+                    <div class="media-container" onclick="openPost('${post.id}')">
+                        ${post.file.endsWith('.mp4') 
+                            ? `<video src="${post.file}" class="media"></video>` 
+                            : `<img src="${post.file}" alt="Post Image" class="media">`}
+                    </div>
+                    <p>${post.caption}</p>
+                    <div class="post-stats">
+                        <span>❤️ ${post.likes}</span>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            alert('Error: User not found.');
         }
+    } catch (error) {
+        console.error('Error loading profile:', error);
+        alert('An error occurred while loading the profile.');
+    }
+}
 
         function openPost(postId) {
             const postUrl = `/foryou?post=${postId}`;
