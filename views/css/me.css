@@ -120,6 +120,28 @@ body {
     text-align: center;
 }
 
+.follow-button {
+    background-color: #003366; /* Dark blue background */
+    color: #ffffff; /* White text */
+    border: none; /* No border */
+    padding: 10px 20px; /* Padding for the button */
+    font-size: 16px; /* Font size */
+    font-weight: bold; /* Bold text */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Pointer cursor on hover */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transition */
+}
+
+.follow-button:hover {
+    background-color: #00509e; /* Lighter blue on hover */
+}
+
+.follow-button:active {
+    background-color: #002244; /* Even darker blue when active */
+    transform: scale(0.95); /* Slight shrink on click */
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .profile-info {
