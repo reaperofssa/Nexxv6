@@ -1,35 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home</title>
-  <link rel="stylesheet" href="/css/home.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search User</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .search-container {
+            text-align: center;
+            padding: 2rem;
+            border: 1px solid #333;
+            border-radius: 10px;
+            background: #1e1e1e;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-bottom: 1rem;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background: #2c2c2c;
+            color: white;
+        }
+
+        input[type="text"]::placeholder {
+            color: #888;
+        }
+
+        button {
+            background-color: #007BFF;
+            border: none;
+            color: white;
+            padding: 12px 16px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        footer {
+            background-color: #121212;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            padding: 0.5rem 0;
+            border-top: 1px solid #444;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        footer button {
+            background-color: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        footer button:hover {
+            background-color: white;
+            color: black;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>Welcome to the Social App</h1>
-  </header>
+    <div class="search-container">
+        <h1>Search User</h1>
+        <input type="text" id="searchInput" placeholder="Enter username">
+        <button onclick="searchUser()">Search</button>
+    </div>
 
-  <main>
-    <section id="content">
-      <h2>Explore the App</h2>
-      <p>Use the navigation buttons below to explore the app.</p>
-    </section>
-  </main>
+    <footer>
+        <nav class="footer-nav">
+            <button onclick="navigateTo('/foryou')">For You</button>
+            <button onclick="navigateTo('/post')">Post</button>
+            <button onclick="navigateTo('/me')">Me</button>
+        </nav>
+    </footer>
 
-  <footer>
-    <nav class="footer-nav">
-      <button id="forYouButton" onclick="navigateTo('/foryou')">For You</button>
-      <button id="postButton" onclick="navigateTo('/post')">Post</button>
-      <button id="meButton" onclick="navigateTo('/me')">Me</button>
-    </nav>
-  </footer>
+    <script>
+        function searchUser() {
+            const username = document.getElementById('searchInput').value.trim();
+            if (username) {
+                window.location.href = `/user/${username}`;
+            } else {
+                alert('Please enter a username to search.');
+            }
+        }
 
-  <script>
-    function navigateTo(route) {
-      window.location.href = route;
-    }
-  </script>
+        function navigateTo(route) {
+            window.location.href = route;
+        }
+    </script>
 </body>
 </html>
