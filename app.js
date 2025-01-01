@@ -20,6 +20,7 @@ const upload = multer({ dest: 'public/uploads/' });
 // File paths
 const USERS_FILE = './users.json';
 const POSTS_FILE = './posts.json';
+const FOLLOWERS_FILE= './followers.json';
 
 // Helper function to load data from files
 function loadFile(filePath) {
@@ -36,6 +37,13 @@ if (fs.existsSync(POSTS_FILE)) {
     const data = fs.readFileSync(POSTS_FILE, 'utf-8');
     posts = JSON.parse(data);
 }
+
+if (!fs.existsSync(FOLLOWERS_FILE)) {
+    fs.writeFileSync(FOLLOWERS_FILE, JSON.stringify([])); // Empty array initially
+}
+
+let followersData = JSON.parse(fs.readFileSync(FOLLOWERS_FILE, 'utf8'));
+
 // Routes
 app.get('/', (req, res) => {
     const username = req.query.username || '';
@@ -190,26 +198,61 @@ app.post('/api/share', (req, res) => {
 
 // API to follow/unfollow a user
 app.post('/api/follow', (req, res) => {
-    const { follower, followee } = req.body;
+    const currentUsername = req.headers['current-username']; // Header example
 
-    const followerUser = users.find((u) => u.username === follower);
-    const followeeUser = users.find((u) => u.username === followee);
+    if (!currentUsername) {
+        return res.status(400).json({ success: false, message: 'Current username is required.' });
+    }
 
-    if (followerUser && followeeUser) {
-        if (followerUser.following.includes(followee)) {
-            // Unfollow
-            followerUser.following = followerUser.following.filter((f) => f !== followee);
-            followeeUser.followers = Math.max(0, followeeUser.followers - 1);
-        } else {
-            // Follow
-            followerUser.following.push(followee);
-            followeeUser.followers += 1;
-        }
+    const { followee } = req.body;
 
-        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-        res.json({ success: true, followerCount: followeeUser.followers });
+    if (!followee) {
+        return res.status(400).json({ success: false, message: 'Followee username is required.' });
+    }
+
+    // Find or create entry for the followee in followers.json
+    let followeeEntry = followersData.find((f) => f.username === followee);
+    if (!followeeEntry) {
+        followeeEntry = { username: followee, followersCount: 0, followers: [] };
+        followersData.push(followeeEntry);
+    }
+
+    // Follow/unfollow logic
+    if (followeeEntry.followers.includes(currentUsername)) {
+        // Unfollow logic
+        followeeEntry.followers = followeeEntry.followers.filter((f) => f !== currentUsername);
     } else {
-        res.status(404).json({ success: false, message: 'User not found.' });
+        // Follow logic
+        followeeEntry.followers.push(currentUsername);
+    }
+
+    // Update the followers count
+    followeeEntry.followersCount = followeeEntry.followers.length;
+
+    // Save changes to the followers.json file
+    fs.writeFileSync(FOLLOWERS_FILE, JSON.stringify(followersData, null, 2));
+
+    // Respond with updated follower count and list
+    res.json({
+        success: true,
+        followerCount: followeeEntry.followersCount,
+        usersWhoFollowed: followeeEntry.followers,
+    });
+});
+
+app.get('/api/followers', (req, res) => {
+    res.json(followersData);
+});
+
+// Route to get followers of a specific user
+app.get('/api/followers/:username', (req, res) => {
+    const { username } = req.params;
+
+    const userEntry = followersData.find((f) => f.username === username);
+    if (userEntry) {
+        res.json(userEntry);
+    } else {
+        res.status(404).json({ success: false, message: 'User not found in followers list.' });
     }
 });
 
