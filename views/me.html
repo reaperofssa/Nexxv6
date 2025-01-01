@@ -14,7 +14,7 @@
                 <h1 id="username">@username</h1>
                 <div class="follow-info">
                     <p id="followers">0 Followers</p>
-                    <p id="following">0 Following</p>
+                    <button id="following" class="follow-button">View Followers</button>
                 </div>
             </div>
         </div>
@@ -100,7 +100,13 @@ async function loadProfile() {
                 console.warn('Failed to load followers:', followersData.message);
             }
 
-            document.getElementById('following').textContent = `${user.following.length} Following`;
+            const followingButton = document.getElementById('following');
+const usernameElement = document.getElementById('username');
+
+followingButton.addEventListener('click', () => {
+    const username = usernameElement.textContent.replace('@', '');
+    window.location.href = `/followerslist?user=${username}`;
+});
 
             // Populate posts
             const postsContainer = document.getElementById('myPosts');
