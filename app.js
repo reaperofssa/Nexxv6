@@ -3,6 +3,7 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const multer = require('multer');
 const path = require('path');
+const fetch = require('node-fetch');
 
 const app = express();
 const PORT = 3000;
@@ -315,6 +316,40 @@ app.get('/api/user/:username', (req, res) => {
 
 app.get('/user/:username', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/me.html'));
+});
+
+app.get('/api/followers/:username', async (req, res) => {
+    const username = req.params.username;
+
+    if (!username) {
+        return res.status(400).json({ success: false, message: 'Username is required.' });
+    }
+
+    try {
+        // Fetch user data from /api/user/:username
+        const userResponse = await fetch(`http://localhost:3000/api/user/${username}`);
+        
+        if (!userResponse.ok) {
+            return res.status(userResponse.status).json({ success: false, message: 'User not found.' });
+        }
+
+        const userData = await userResponse.json();
+
+        // Ensure the response contains followers data
+        if (!userData.followersCount || !userData.followers) {
+            return res.status(500).json({ success: false, message: 'Invalid user data received.' });
+        }
+
+        // Respond with followers data
+        res.json({
+            username,
+            followersCount: userData.followersCount,
+            followers: userData.followers,
+        });
+    } catch (error) {
+        console.error('Error fetching user data:', error);
+        res.status(500).json({ success: false, message: 'An error occurred while fetching followers data.' });
+    }
 });
 
 // API to upload/update profile picture
