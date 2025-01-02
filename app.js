@@ -104,16 +104,36 @@ app.post('/api/auth', (req, res) => {
 });
 
 // API to create a post
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, 'public/uploads')); // Save files in 'public/uploads'
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname); // Extract original file extension
+        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`; // Unique file name
+        cb(null, uniqueName); // Save with unique name and correct extension
+    },
+});
+
+// Initialize multer with custom storage
+const upload = multer({ storage });
+
+// API to create a post
 app.post('/api/post', upload.single('file'), (req, res) => {
     const { username, caption } = req.body;
-    const file = req.file ? `/uploads/${req.file.filename}` : '';
+
+    if (!req.file) {
+        return res.status(400).json({ success: false, message: 'No file uploaded.' });
+    }
+
+    const filePath = `/uploads/${req.file.filename}`; // Correct file path
 
     // Create the new post object
     const newPost = {
         id: posts.length + 1,
         username,
         caption,
-        file,
+        file: filePath, // Save the file path
         timestamp: Date.now(),
         likedBy: [], // Array to store usernames of users who liked the post
         likes: 0,
@@ -133,6 +153,7 @@ app.post('/api/post', upload.single('file'), (req, res) => {
         // Respond with success if no error
         res.json({ success: true, post: newPost });
     });
+});
 });
 
 // API to fetch posts
