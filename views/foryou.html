@@ -108,8 +108,11 @@ function renderPost(index) {
     postElement.className = 'post';
 
     const mediaContent = post.file
-        ? post.file.endsWith('.mp4')
-            ? `<video src="${post.file}" controls class="media"></video>`
+    ? post.file.endsWith('.mp4')
+        ? `<video controls class="media" onerror="this.src='/videos/placeholder.mp4'">
+               <source src="/uploads/${post.file}" type="video/mp4">
+               Your browser does not support the video tag.
+           </video>`
             : `<img src="${post.file}" alt="Post Media" class="media" onerror="this.src='/images/placeholder.png'">`
         : `<img src="/images/placeholder.png" alt="Placeholder" class="media">`;
 
