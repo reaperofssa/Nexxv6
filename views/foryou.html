@@ -96,29 +96,21 @@ async function fetchPosts() {
 
 // Function to render a post
 function renderPost(index) {
-    if (index < 0 || index >= posts.length) return;
+      if (index < 0 || index >= posts.length) return;
+      const postsContainer = document.getElementById('posts-container');
+      postsContainer.innerHTML = '';
 
-    const postsContainer = document.getElementById('posts-container');
-    postsContainer.innerHTML = '';
+      const post = posts[index];
+      const isVerified = verifiedUsers.includes(post.username);
 
-    const post = posts[index];
-    const isVerified = verifiedUsers.includes(post.username);
-
-    const postElement = document.createElement('div');
-    postElement.className = 'post';
-
-    const mediaContent = post.file
-  ? post.file.endsWith('.mp4')
-    ? `<div>
-         <video class="media" id="video-${index}" controls controlslist="nofullscreen" onerror="this.src='/videos/placeholder.mp4'">
-           <source src="/uploads/${post.file}" type="video/mp4">
-           Your browser does not support the video tag.
-         </video>
-         <div class="video-controls">
-           <button onclick="togglePlayPause(${index})" id="play-button-${index}">Play</button>
-         </div>
-       </div>`
-    : `<img src="${post.file}" alt="Post Media" class="media" onerror="this.src='/images/placeholder.png'">`
+      const mediaContent = post.file.endsWith('.mp4')
+        ? `<div>
+             <video class="media" id="video-${index}" muted playsinline>
+               <source src="/uploads/${post.file}" type="video/mp4">
+               Your browser does not support the video tag.
+             </video>
+           </div>`
+        : `<img src="${post.file}" alt="Post Media" class="media" onerror="this.src='/images/placeholder.png'">`
   : `<img src="/images/placeholder.png" alt="Placeholder" class="media">`;
 
     postElement.innerHTML = `
@@ -279,6 +271,33 @@ async function initializeApp() {
     await fetchCurrentUser();  // Fetch the current user
     await fetchPosts();        // Fetch all posts
 }
+
+// Initialize scroll-based autoplay
+    function initializeScrollAutoplay() {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const video = entry.target;
+            if (entry.isIntersecting) {
+              video.play().catch((err) => console.error('Autoplay failed:', err));
+            } else {
+              video.pause();
+            }
+          });
+        },
+        { threshold: 0.5 } // Play when 50% of the video is visible
+      );
+
+      // Observe all videos
+      document.querySelectorAll('video').forEach((video) => observer.observe(video));
+    }
+
+    // Initialize the app
+    async function initializeApp() {
+      await fetchCurrentUser();
+      await fetchPosts();
+      initializeScrollAutoplay();
+    }
 
 initializeApp();
   </script>
