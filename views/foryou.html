@@ -108,13 +108,18 @@ function renderPost(index) {
     postElement.className = 'post';
 
     const mediaContent = post.file
-    ? post.file.endsWith('.mp4')
-        ? `<video controls class="media" onerror="this.src='/videos/placeholder.mp4'">
-               <source src="/uploads/${post.file}" type="video/mp4">
-               Your browser does not support the video tag.
-           </video>`
-            : `<img src="${post.file}" alt="Post Media" class="media" onerror="this.src='/images/placeholder.png'">`
-        : `<img src="/images/placeholder.png" alt="Placeholder" class="media">`;
+  ? post.file.endsWith('.mp4')
+    ? `<div>
+         <video class="media" id="video-${index}" controls controlslist="nofullscreen" onerror="this.src='/videos/placeholder.mp4'">
+           <source src="/uploads/${post.file}" type="video/mp4">
+           Your browser does not support the video tag.
+         </video>
+         <div class="video-controls">
+           <button onclick="togglePlayPause(${index})" id="play-button-${index}">Play</button>
+         </div>
+       </div>`
+    : `<img src="${post.file}" alt="Post Media" class="media" onerror="this.src='/images/placeholder.png'">`
+  : `<img src="/images/placeholder.png" alt="Placeholder" class="media">`;
 
     postElement.innerHTML = `
         <div class="media-container">
@@ -219,6 +224,19 @@ function sharePost(postId) {
     }).catch(err => {
         console.error('Failed to copy link:', err);
     });
+}
+
+function togglePlayPause(index) {
+  const video = document.getElementById(`video-${index}`);
+  const playButton = document.getElementById(`play-button-${index}`);
+
+  if (video.paused) {
+    video.play();
+    playButton.innerText = 'Pause';
+  } else {
+    video.pause();
+    playButton.innerText = 'Play';
+  }
 }
 
 // Function to navigate between posts
