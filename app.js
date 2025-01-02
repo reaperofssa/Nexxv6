@@ -14,8 +14,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static('views'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 // File upload setup
+
 const upload = multer({ dest: 'public/uploads/' });
 
 // File paths
