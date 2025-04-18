@@ -154,7 +154,7 @@ app.post('/api/post', upload.single('file'), (req, res) => {
         res.json({ success: true, post: newPost });
     });
 });
-});
+
 
 // API to fetch posts
 app.get('/api/posts', (req, res) => {
