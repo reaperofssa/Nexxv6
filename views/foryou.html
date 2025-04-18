@@ -1,34 +1,184 @@
-Help me fix videos are not playing and help me do it that the scroll serves as play remove all video commands use html to make another play button like tiktok and help me fix the interface make it better but focus on fixing videos to play send full fixed script make the page look better too
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>For You</title>
-  <link rel="stylesheet" href="/css/foryou.css">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    body {
+      background-color: #000;
+      color: #fff;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    #posts-container {
+      height: calc(100vh - 60px);
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .post {
+      height: 100vh;
+      scroll-snap-align: start;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    
+    .media-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #000;
+    }
+    
+    .media {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    
+    video {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .overlay {
+      position: relative;
+      z-index: 2;
+      padding: 16px;
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .username {
+      font-weight: bold;
+      margin-right: 8px;
+      cursor: pointer;
+    }
+    
     .verified-mark {
       width: 16px;
       height: 16px;
-      margin-left: 3px;
-      vertical-align: middle;
+      margin-left: 4px;
     }
-    .media-container {
-      position: relative;
-    }
-    .media {
-      max-width: 100%;
-      max-height: 80vh;
-      display: block;
-      margin: 0 auto;
-    }
-    .overlay {
-      padding: 10px;
-    }
+    
     .caption {
-      font-size: 14px;
-      color: #333;
+      margin-bottom: 12px;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 16px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .action-button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    
+    .action-count {
+      font-size: 12px;
+      margin-top: -8px;
+    }
+    
+    .follow-button {
+      background-color: #ff0050;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 12px;
+    }
+    
+    .follow-button.following {
+      background-color: transparent;
+      border: 1px solid #ccc;
+    }
+    
+    .play-button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    
+    .play-button.visible {
+      opacity: 1;
+    }
+    
+    .play-button-icon {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+    
+    footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background-color: #000;
+      border-top: 1px solid #333;
+      padding: 10px 0;
+    }
+    
+    .footer-nav {
+      display: flex;
+      justify-content: space-around;
+    }
+    
+    .footer-nav button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -37,52 +187,53 @@ Help me fix videos are not playing and help me do it that the scroll serves as p
 
   <footer>
     <nav class="footer-nav">
-      <button onclick="navigateTo('/search')">Search</button>
-      <button onclick="navigateTo('/post')">Post</button>
-      <button onclick="navigateTo('/me')">Me</button>
+      <button onclick="navigateTo('/search')">🔍</button>
+      <button onclick="navigateTo('/post')">➕</button>
+      <button onclick="navigateTo('/me')">👤</button>
     </nav>
   </footer>
 
   <script>
     let currentIndex = 0;
-let posts = [];
-let isTransitioning = false;
-let verifiedUsers = [];
-let currentUser = null; // To store the logged-in user's details
+    let posts = [];
+    let isTransitioning = false;
+    let verifiedUsers = [];
+    let currentUser = null;
+    let lastScrollTime = 0;
 
-// Function to fetch the current user (fetches from /api/me)
-async function fetchCurrentUser() {
-    const username = localStorage.getItem('username');
-    
-    if (!username) {
+    // Function to fetch the current user
+    async function fetchCurrentUser() {
+      const username = localStorage.getItem('username');
+      
+      if (!username) {
         console.error('No user logged in');
         return;
-    }
+      }
 
-    try {
+      try {
         const res = await fetch('/api/me', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-username': username  // Send the username in the headers
-            }
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-username': username
+          }
         });
 
         const data = await res.json();
 
         if (data.success) {
-            currentUser = data.user; // Store current user details
+          currentUser = data.user;
         } else {
-            console.error('Failed to fetch current user:', data.message);
+          console.error('Failed to fetch current user:', data.message);
         }
-    } catch (error) {
+      } catch (error) {
         console.error('Error fetching current user:', error);
+      }
     }
-}
 
-// Function to fetch all posts
-async function fetchPosts() {
-    try {
+    // Function to fetch all posts
+    async function fetchPosts() {
+      try {
         const res = await fetch('/api/posts');
         posts = await res.json();
 
@@ -90,218 +241,226 @@ async function fetchPosts() {
         const verifiedData = await verifiedRes.json();
         verifiedUsers = verifiedData.verifiedUsers || [];
 
-        renderPost(currentIndex);
-    } catch (error) {
+        renderPosts();
+      } catch (error) {
         console.error('Error fetching posts or verified users:', error);
+      }
     }
-}
 
-// Function to render a post
-function renderPost(index) {
-      if (index < 0 || index >= posts.length) return;
+    // Function to render all posts
+    function renderPosts() {
       const postsContainer = document.getElementById('posts-container');
       postsContainer.innerHTML = '';
 
-      const post = posts[index];
-      const isVerified = verifiedUsers.includes(post.username);
+      posts.forEach((post, index) => {
+        const isVerified = verifiedUsers.includes(post.username);
+        const isVideo = post.file.endsWith('.mp4');
+        
+        const postElement = document.createElement('div');
+        postElement.className = 'post';
+        postElement.id = `post-${index}`;
 
-      const mediaContent = post.file.endsWith('.mp4')
-        ? `<div>
-             <video class="media" id="video-${index}" muted playsinline>
+        const mediaContent = isVideo 
+          ? `<video class="media" id="video-${index}" muted playsinline loop>
                <source src="/uploads/${post.file}" type="video/mp4">
                Your browser does not support the video tag.
-             </video>
-           </div>`
-        : `<img src="${post.file}" alt="Post Media" class="media" onerror="this.src='/images/placeholder.png'">`
-  : `<img src="/images/placeholder.png" alt="Placeholder" class="media">`;
+             </video>`
+          : `<img src="/uploads/${post.file}" alt="Post Media" class="media" onerror="this.src='/images/placeholder.png'">`;
 
-    postElement.innerHTML = `
-        <div class="media-container">
-          ${mediaContent}
-        </div>
-        <div class="overlay">
-          <h3 class="username" onclick="navigateTo('/user/${post.username}')">
-            ${post.username}
-            ${isVerified ? `<img src="/images/verified-placeholder.png" alt="Verified" class="verified-mark" onerror="this.src='/images/verified-placeholder.png'">` : ''}
-          </h3>
-          <p class="caption" style="color: lightblue;">${post.caption}</p>
-          <button class="like-button" onclick="likePost(${index})">
-            ${post.liked ? '❤️ Liked' : '🤍 Like'}
-          </button>
-          <button class="follow-button" onclick="followUser('${post.username}')">
-            ${post.following ? 'Following' : 'Follow'}
-          </button>
-          <span class="like-count">${post.likes || 0} likes</span>
-          <button class="share-button" onclick="sharePost('${post.id}')">🔗 Share</button>
-        </div>
-    `;
+        postElement.innerHTML = `
+          <div class="media-container">
+            ${mediaContent}
+            ${isVideo ? `<div class="play-button" id="play-button-${index}">
+              <svg class="play-button-icon" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>` : ''}
+          </div>
+          <div class="overlay">
+            <div class="user-info">
+              <span class="username" onclick="navigateTo('/user/${post.username}')">
+                ${post.username}
+                ${isVerified ? `<img src="/images/verified-placeholder.png" alt="Verified" class="verified-mark" onerror="this.src='/images/verified-placeholder.png'">` : ''}
+              </span>
+              <button class="follow-button ${post.following ? 'following' : ''}" onclick="followUser('${post.username}', ${index})">
+                ${post.following ? 'Following' : 'Follow'}
+              </button>
+            </div>
+            <p class="caption">${post.caption}</p>
+            <div class="actions">
+              <div class="action-buttons">
+                <button class="action-button" onclick="likePost(${index})">
+                  ${post.liked ? '❤️' : '🤍'}
+                </button>
+                <span class="action-count">${post.likes || 0}</span>
+                <button class="action-button" onclick="navigateTo('/post/${post.id}')">💬</button>
+                <span class="action-count">${post.comments || 0}</span>
+                <button class="action-button" onclick="sharePost('${post.id}')">↗️</button>
+              </div>
+            </div>
+          </div>
+        `;
 
-    postsContainer.appendChild(postElement);
-}
+        postsContainer.appendChild(postElement);
 
-// Function to like a post
-async function likePost(index) {
-    const post = posts[index];
-    const username = currentUser ? currentUser.username : null;
+        if (isVideo) {
+          const video = document.getElementById(`video-${index}`);
+          const playButton = document.getElementById(`play-button-${index}`);
+          
+          video.addEventListener('click', () => togglePlayPause(index));
+          video.addEventListener('play', () => {
+            playButton.classList.remove('visible');
+          });
+          video.addEventListener('pause', () => {
+            playButton.classList.add('visible');
+          });
+        }
+      });
 
-    if (!username) {
-        alert('You need to log in to like posts.');
-        return;
+      // Set up intersection observer for scroll-based playback
+      setupIntersectionObserver();
     }
 
-    const updatedLiked = !post.liked;
+    // Set up intersection observer for scroll-based playback
+    function setupIntersectionObserver() {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const now = Date.now();
+          if (now - lastScrollTime < 300) return; // Debounce rapid scrolls
+          
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const index = parseInt(entry.target.id.split('-')[1]);
+              const video = document.getElementById(`video-${index}`);
+              
+              if (video) {
+                // Pause all other videos
+                document.querySelectorAll('video').forEach(v => {
+                  if (v !== video) v.pause();
+                });
+                
+                video.play().catch(err => console.error('Playback failed:', err));
+                currentIndex = index;
+              }
+            }
+          });
+          
+          lastScrollTime = now;
+        },
+        { threshold: 0.8 }
+      );
 
-    try {
+      document.querySelectorAll('.post').forEach(post => {
+        observer.observe(post);
+      });
+    }
+
+    // Toggle play/pause for videos
+    function togglePlayPause(index) {
+      const video = document.getElementById(`video-${index}`);
+      if (!video) return;
+      
+      if (video.paused) {
+        video.play().catch(err => console.error('Playback failed:', err));
+      } else {
+        video.pause();
+      }
+    }
+
+    // Function to like a post
+    async function likePost(index) {
+      const post = posts[index];
+      const username = currentUser ? currentUser.username : null;
+
+      if (!username) {
+        alert('You need to log in to like posts.');
+        return;
+      }
+
+      const updatedLiked = !post.liked;
+
+      try {
         const response = await fetch('/api/like', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ postId: post.id, username, liked: updatedLiked }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postId: post.id, username, liked: updatedLiked }),
         });
 
         const data = await response.json();
 
         if (data.success) {
-            // Update the post locally with server response
-            post.liked = updatedLiked;
-            post.likes = data.likes;
-            renderPost(index);
+          post.liked = updatedLiked;
+          post.likes = data.likes;
+          renderPosts();
         } else {
-            console.error('Error updating like:', data.message);
+          console.error('Error updating like:', data.message);
         }
-    } catch (error) {
+      } catch (error) {
         console.error('Error updating like:', error);
+      }
     }
-}
 
-// Function to follow/unfollow a user
-async function followUser(followeeUsername) {
-    const currentUsername = localStorage.getItem('username'); // Get the logged-in username from localStorage
+    // Function to follow/unfollow a user
+    async function followUser(followeeUsername, index) {
+      const currentUsername = localStorage.getItem('username');
 
-    if (!currentUsername) {
+      if (!currentUsername) {
         alert('You need to log in to follow users.');
         return;
-    }
+      }
 
-    try {
+      try {
         const res = await fetch('/api/follow', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'current-username': currentUsername, // Pass current username in headers
-            },
-            body: JSON.stringify({ followee: followeeUsername }), // Send followee username in the body
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'current-username': currentUsername,
+          },
+          body: JSON.stringify({ followee: followeeUsername }),
         });
 
         const data = await res.json();
 
         if (res.ok) {
-            // Update the follow status in the current post
-            posts[currentIndex].following = !posts[currentIndex].following;
-
-            alert(data.message || `${posts[currentIndex].following ? 'Followed' : 'Unfollowed'} ${followeeUsername}!`);
-            renderPost(currentIndex); // Re-render the post to update UI
+          posts[index].following = !posts[index].following;
+          renderPosts();
         } else {
-            console.error('Error updating follow status:', data.message);
-            alert(data.message || 'Failed to update follow status.');
+          console.error('Error updating follow status:', data.message);
+          alert(data.message || 'Failed to update follow status.');
         }
-    } catch (error) {
+      } catch (error) {
         console.error('Error following user:', error);
         alert('An error occurred. Please try again.');
+      }
     }
-}
 
-// Function to share a post
-function sharePost(postId) {
-    const uniqueLink = `${window.location.origin}/foryou?post=${postId}`;
-    navigator.clipboard.writeText(uniqueLink).then(() => {
+    // Function to share a post
+    function sharePost(postId) {
+      const uniqueLink = `${window.location.origin}/foryou?post=${postId}`;
+      navigator.clipboard.writeText(uniqueLink).then(() => {
         alert('Post link copied to clipboard!');
-    }).catch(err => {
+      }).catch(err => {
         console.error('Failed to copy link:', err);
-    });
-}
-
-function togglePlayPause(index) {
-  const video = document.getElementById(`video-${index}`);
-  const playButton = document.getElementById(`play-button-${index}`);
-
-  if (video.paused) {
-    video.play();
-    playButton.innerText = 'Pause';
-  } else {
-    video.pause();
-    playButton.innerText = 'Play';
-  }
-}
-
-// Function to navigate between posts
-function navigatePost(direction) {
-    if (isTransitioning) return;
-    isTransitioning = true;
-
-    const newIndex = currentIndex + direction;
-    if (newIndex >= 0 && newIndex < posts.length) {
-        currentIndex = newIndex;
-        renderPost(currentIndex);
+      });
     }
 
-    setTimeout(() => {
-        isTransitioning = false;
-    }, 300);
-}
-
-// Event listeners for touch navigation
-let startY = 0;
-window.addEventListener('touchstart', (e) => {
-    startY = e.touches[0].clientY;
-});
-
-window.addEventListener('touchend', (e) => {
-    const endY = e.changedTouches[0].clientY;
-    const distance = startY - endY;
-
-    if (distance > 50) navigatePost(1);
-    else if (distance < -50) navigatePost(-1);
-});
-
-// Function to navigate to a new route
-function navigateTo(route) {
-    window.location.href = route;
-}
-
-// Fetch user and posts when the app loads
-async function initializeApp() {
-    await fetchCurrentUser();  // Fetch the current user
-    await fetchPosts();        // Fetch all posts
-}
-
-// Initialize scroll-based autoplay
-    function initializeScrollAutoplay() {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            const video = entry.target;
-            if (entry.isIntersecting) {
-              video.play().catch((err) => console.error('Autoplay failed:', err));
-            } else {
-              video.pause();
-            }
-          });
-        },
-        { threshold: 0.5 } // Play when 50% of the video is visible
-      );
-
-      // Observe all videos
-      document.querySelectorAll('video').forEach((video) => observer.observe(video));
+    // Function to navigate to a new route
+    function navigateTo(route) {
+      window.location.href = route;
     }
 
     // Initialize the app
     async function initializeApp() {
       await fetchCurrentUser();
       await fetchPosts();
-      initializeScrollAutoplay();
     }
 
-initializeApp();
+    // Handle scroll events for better UX
+    document.getElementById('posts-container').addEventListener('scroll', () => {
+      lastScrollTime = Date.now();
+    });
+
+    initializeApp();
   </script>
 </body>
 </html>
