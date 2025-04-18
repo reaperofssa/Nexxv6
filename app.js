@@ -116,7 +116,7 @@ const storage = multer.diskStorage({
 });
 
 // Initialize multer with custom storage
-const upload = multer({ storage });
+const uploadx = multer({ storage });
 
 // API to create a post
 app.post('/api/post', upload.single('file'), (req, res) => {
